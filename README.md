@@ -9,12 +9,12 @@ Sly Cooper games (PS2 &amp; PS3) research &amp; modding tools
 1) Go to your installed game's USRDIR directory (example: `rpcs3\dev_hdd0\game\NPUA80663\USRDIR`).
    We'll now refer to this as `$USRDIR`.
 1) Copy `psarc.exe` there (or use the full path to it in the next command)
-1) Run:
+1) Run this to extract the Sly1 contents:
     ```cmd
-    mv Sly1.psarc Sly1.orig.psarc
-    psarc extract --input=Sly1.orig.psarc --to=.
+    psarc extract --input=Sly1.psarc --to=.
+    rename Sly1.psarc Sly1.orig.psarc
     ```
-1) Run:
+1) Run this to unpack the archive:
    ```cmd
    sly_unpacker.exe $USRDIR/Sly1/SLY.WAC
    ```
