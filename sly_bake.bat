@@ -1,8 +1,8 @@
 @echo off
 
 set SLY_USRDIR=D:\Emulators\rpcs3\dev_hdd0\game\NPUA80663\USRDIR
-set SLY_TOOLS=D:\Nikos\Reversing\Sly\Code\sly_playground\cmake-build-relwithdebinfo
-set SLY1_ROOT=D:\Emulators\rpcs3\dev_hdd0\game\NPUA80663\USRDIR\Sly1
+set SLY_TOOLS=D:\Nikos\Reversing\Sly\Code\SlyCooper\cmake-build-relwithdebinfo
+set SLY1_ROOT=%SLY_USRDIR%\Sly1
 set SLY1_DATA=%SLY1_ROOT%\extracted
 set PSARC="D:\Nikos\Reversing\Tools\PS3 Tools\psarc.exe"
 
