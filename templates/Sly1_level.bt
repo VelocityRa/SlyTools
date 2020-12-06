@@ -1,0 +1,36 @@
+LittleEndian();
+DisplayFormatHex();
+
+typedef struct StringEntry_t {
+    ubyte length <bgcolor=cYellow>;
+    ubyte pad;
+
+    local int l = length;
+    if (FTell() == 0x13) {
+        Printf("inc at 0x%X", FTell());
+        l = 65;
+    }
+
+    wchar_t str[l] <bgcolor=cDkRed>;
+} StringEntry <optimize=false, read=StringEntryRead>;
+
+string StringEntryRead(StringEntry &m) {
+    string s;
+    SPrintf(s, "[0x%02X] %s", sizeof(m.str), m.str);
+    return s;
+}
+
+struct LevelHeader {
+    uint unk_size;  // todo: is this sector offset?
+    uint unk0x4;
+    uint16 unk0x8;
+    uint16 unk0xA;
+    uint unk0xC;
+    byte pad;
+
+    struct {
+        StringEntry str[199];
+    } strings;
+};
+
+LevelHeader header;

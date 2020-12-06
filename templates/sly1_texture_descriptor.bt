@@ -1,0 +1,42 @@
+BigEndian();
+DisplayFormatHex();
+
+void hexdump(int64 pos, int n) {
+    local uchar buf[n];
+    ReadBytes(buf, pos, n);
+
+    local int i;
+    for (i = 0; i < n; ++i) {
+        Printf("%02X", buf[i]);
+        if (i % 4 == 3)
+            Printf(" ");
+    }
+}
+
+FSeek(0x14);
+
+typedef struct TextureDescriptor_t {
+    ubyte unk0[0x20];
+    char name[0x20];
+    ubyte unk1[0x60];
+} TextureDescriptor <read=TextureDescriptorRead>;
+
+string TextureDescriptorRead(TextureDescriptor &v) {
+    string s;
+    SPrintf(s, "%s", v.name);
+    return s;
+}
+
+TextureDescriptor desc[256];
+
+local int i;
+local int64 off = 0;
+
+for (i = 0; i < sizeof(desc) / sizeof(TextureDescriptor); ++i) {
+    hexdump(off, 0x20);
+    Printf(" ");
+    hexdump(off+0x20+0x20, 0x60);
+    Printf("\n");
+
+    off = off + 0xA0;
+}

@@ -1,0 +1,241 @@
+LittleEndian();
+DisplayFormatHex();
+
+// Types
+
+typedef uint32 ptr;
+
+// Types - Entity
+
+typedef struct Entity_0x4_0x0_t {
+    ptr unk_0x0_ptr; // size is wrong
+} Entity_0x4_0x0 <bgcolor=cRed>;
+
+typedef struct Entity_0x4_t {
+    ptr unk_0x0_ptr; // size is wrong
+    if (unk_0x0_ptr != 0) {
+        local uint32 tmp_pos = FTell();
+        FSeek(unk_0x0_ptr);
+        Entity_0x4_0x0 unk_0x0_0x0;
+        FSeek(tmp_pos);
+    }
+} Entity_0x4 <bgcolor=cDkRed>;
+
+typedef struct Entity_0x64_t {
+    float unk_0x0[0x1F0/4]; // size is wrong
+} Entity_0x64 <bgcolor=cGreen>;
+
+typedef struct Entity_t {
+    uint32 initial_state <bgcolor=cAqua>;
+    ptr unk_0x4_ptr <bgcolor=cDkBlue>;
+
+    if (unk_0x4_ptr != 0) {
+        local uint32 tmp_pos1 = FTell();
+        FSeek(unk_0x4_ptr);
+        Entity_0x4 unk_0x4;
+        FSeek(tmp_pos1);
+    }
+
+    uint32 max_count <bgcolor=cLtPurple>;
+    uint32 unk_0xC <bgcolor=cDkRed>;
+    uint32 entity_id_maybe <bgcolor=cSilver>;
+    ubyte unk_0x14[8] <bgcolor=cDkYellow>;
+    uchar magic[4] <bgcolor=cYellow>;
+    uchar name[0x3C] <bgcolor=cBlue>;
+    uint32 unk_0x5C <bgcolor=cLtGreen>;
+    uint32 unk_0x60 <bgcolor=cLtGreen>;
+    ptr unk_0x64_ptr <bgcolor=cPurple>;
+
+    if (unk_0x64_ptr != 0) {
+        local uint32 tmp_pos2 = FTell();
+        FSeek(unk_0x64_ptr);
+        Entity_0x64 unk_0x64;
+        FSeek(tmp_pos2);
+    }
+
+    uint32 unk_ptr_2 <bgcolor=cDkPurple>;
+
+} Entity <read=EntityRead, bgcolor=cGreen>;
+
+// Types - Vertex
+
+// probably wrong
+
+typedef struct Vertex_t {
+    float x;
+    float y;
+    float z;
+    float w;
+} Vertex <bgcolor=cDkGreen>;
+
+typedef struct Vertex2_t {
+    float x;
+    float y;
+    float z;
+    uint32 flags;
+} Vertex2 <read=Vertex2Read, bgcolor=cLtGreen>;
+
+// Types - Model
+
+typedef struct Model_t {
+    uint16 vert_count;
+    ubyte unk_0x2[0x12];
+    Vertex vertices[vert_count];
+} Model <read=ModelRead, bgcolor=cPurple>;
+
+// Types - Model2
+
+uint64 Align(uint64 value, uint64 align) {
+    return (value + (align - 1)) & ~(align - 1);
+}
+
+typedef struct Model2_t {
+    ubyte unk[0x19E];
+    ubyte uv_count;
+    ubyte uv_magic; // for UVs this is 0x65
+    
+    if (uv_magic == 0x65) {
+        ubyte uv_unk[4 * uv_count] <bgcolor=cDkYellow>;
+
+        FSeek(Align(FTell(), 0x10));
+
+        ubyte vtx_unk[2];
+        ubyte vtx_count;
+        ubyte vtx_magic; // for vertices this is 0x6C
+
+        if (vtx_magic == 0x6C) {
+            Vertex2 vtx[vtx_count];
+        }
+    } else {
+        Printf("warn: uv_magic: 0x%X at 0x%X\n", uv_magic, FTell());
+    }
+} Model2 <read=Model2Read, bgcolor=cYellow>;
+
+typedef struct BigSegmentVertex_t {
+    float x;
+    float y;
+    float z;
+    //uint index<bgcolor=cLtBlue>;
+    float w <bgcolor=cLtBlue>;
+    FSeek(FTell()-4);
+    uint32 idx <bgcolor=cLtBlue>;
+} BigSegmentVertex <read=BigSegmentVertexRead, bgcolor=cDkBlue>;
+
+typedef struct BigSegmentVertex2_t {
+    float x;
+    float y;
+    float z;
+    float w;
+    uint32 unk_0x10_ptr <bgcolor=cYellow>;
+    uint32 unk_0x14_bf <bgcolor=cPurple>;
+    uint32 pad_0x18 <bgcolor=cGray>;
+    uint16 unk_0x1C <bgcolor=cGreen>;
+    uint16 pad_0x1E <bgcolor=cGray>;
+} BigSegmentVertex2 <read=BigSegmentVertex2Read, bgcolor=cDkYellow>;
+
+// Read functions
+
+string EntityRead(Entity &m) {
+    string s;
+    SPrintf(s, "%s | Spawn: %s (0x%02X) | Max: %02d | x64: %s | x5C: %s | x60: %s | %s",
+        m.magic, m.initial_state != 0 ? "Yes" : "No ", m.initial_state,
+        m.max_count, m.unk_0x64_ptr != 0 ? "Yes" : "No ", m.unk_0x5C != 0 ? "Yes" : "No ",
+        m.unk_0x60 != 0 ? "Yes" : "No ", m.name);
+    return s;
+}
+
+string ModelRead(Model &m) {
+    string s;
+    SPrintf(s, "Vertices: %d", m.vert_count);
+    return s;
+}
+
+string Model2Read(Model2 &m) {
+    string s;
+    if (m.uv_magic == 0x65)
+        SPrintf(s, "Vertices: %d", m.vtx_count);
+    else
+        SPrintf(s, "UVs: %d", m.uv_count);
+
+    SPrintf(s, "Unk: 0x%02X%02X %s", m.unk[0], m.unk[1], s);
+    return s;
+}
+
+string Vertex2Read(Vertex2 &m) {
+    string s;
+    SPrintf(s, "%3.1f        %3.1f        %3.1f      0x%X", m.x, m.y, m.z, m.flags);
+    return s;
+}
+
+string BigSegmentVertexRead(BigSegmentVertex &m) {
+    string s;
+    if ((m.idx >> 16 & 0xFFFF) == 0) {
+        SPrintf(s, "%3.1f        %3.1f        %3.1f      0x%04X (%d)", m.x, m.y, m.z, m.idx, m.idx);
+    } else {
+        SPrintf(s, "%3.1f        %3.1f        %3.1f      %3.1f", m.x, m.y, m.z, m.w);
+    }
+    return s;
+}
+string BigSegmentVertex2Read(BigSegmentVertex2 &m) {
+    string s;
+    SPrintf(s, "%1.3f    %1.3f    %1.3f    %4.1f", m.x, m.y, m.z, m.w);
+    return s;
+}
+
+// Entry point
+
+// Find entities
+
+/*
+struct Entities {
+    local ubyte ent_marker_magic[3] = { 'F', 'K', '$' };
+    local TFindResults ent_marker_res = FindAll(ent_marker_magic);
+    
+    local int i;
+    for (i = 1; i < ent_marker_res.count; i++ ) { // Skip the first one (it's invalid)
+        FSeek(ent_marker_res.start[i] - 0x1C);
+        Entity e;
+    }
+} entities <open=false>;
+*/
+
+// Find models
+
+struct Models {
+    local ubyte mdl_marker_magic[4] = { 0x00, 0xC0, 0x04, 0x6C };
+    local TFindResults mdl_marker_res = FindAll(mdl_marker_magic);
+    
+    local int i;
+    for (i = 0; i < mdl_marker_res.count; i++ ) {
+        FSeek(mdl_marker_res.start[i] - 0x10);
+        Model m;
+    }
+} models <open=false>;
+
+struct Models2 {
+    local ubyte mdl2_marker_magic[4] = { 0x08, 0xC0, 0x01, 0x6C };
+    local TFindResults mdl2_marker_res = FindAll(mdl2_marker_magic);
+    
+    local int i;
+    local ptr ptr_to_mdl2;
+    for (i = 0; i < mdl2_marker_res.count; i++ ) {
+        ptr_to_mdl2 = ReadUInt(mdl2_marker_res.start[i] + 0x20);
+        Printf("mdl2 at 0x%08X from 0x%X\n", ptr_to_mdl2, mdl2_marker_res.start[i]+0x20);
+        if (0 < ptr_to_mdl2 && ptr_to_mdl2 < 0x1FFFFFF) {
+            FSeek(ptr_to_mdl2);
+            Model2 m2;
+        } else {
+            Printf("warn: Invalid!\n");
+        }
+    }
+
+    FSeek(FileSize()); // Else we get an error
+} models2 <open=false>;
+
+
+
+// big segment
+
+FSeek(0x019c8ae0);
+BigSegmentVertex big_seg_vert[0x43D60/16];
+BigSegmentVertex2 big_seg_ver2t[0x43D60/16];

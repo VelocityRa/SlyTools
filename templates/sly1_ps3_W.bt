@@ -1,0 +1,202 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: sly1_ps3_W.bt
+//   Authors: VelocityRa (https://github.com/VelocityRa). Also thanks to revel8n.
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+//
+// Initialization
+//
+
+LittleEndian();
+DisplayFormatHex();
+
+//
+// Utility functions
+//
+
+void hexdump(int64 pos, int n) {
+    local uchar buf[n];
+    ReadBytes(buf, pos, n);
+
+    local int i;
+    for (i = 0; i < n; ++i) {
+        Printf("%02X", buf[i]);
+        if (i % 4 == 3)
+            Printf(" ");
+    }
+}
+
+//
+// Type definitions (w/ Read functions)
+//
+
+typedef struct Vert_t {
+    float x <bgcolor=cGreen>;
+    float y <bgcolor=cGreen>;
+    float z <bgcolor=cGreen>;
+    float unk0;
+    float unk1;
+    float unk2;
+    float unk3;
+    float unk4;
+    uint32 unk5;
+} Vert <read=VertRead, bgcolor=cDkGreen>;
+
+string VertRead(Vert &m) {
+    string s;
+    SPrintf(s, "%7.2f   %7.2f   %7.2f   %4.3f   %4.3f   %4.3f   %4.3f   %4.3f 0x%08X",
+        m.x, m.y, m.z, m.unk0, m.unk1, m.unk2, m.unk3, m.unk4, m.unk5);
+    return s;
+};
+
+typedef struct VertexHeader0x10_t {
+    uint unk4 <open=true>;
+    uint unk5 <open=true>;
+    ubyte vertex_count <bgcolor=cYellow>;
+    ubyte unk01;
+    uint16 unk1;
+    uint unk2 <open=true>;
+    uint unk3 <open=true>;   
+} VertexHeader0x10 <open=true, bgcolor=cDkYellow>;
+
+typedef struct VertexHeader0xC_t {
+    uint unk2 <open=true>;
+    ubyte vertex_count <bgcolor=cYellow>;
+    ubyte unk01;
+    uint16 unk1;
+    uint unk4 <open=true>;
+    uint unk3 <open=true>;
+} VertexHeader0x0C <open=true, bgcolor=cDkYellow>;
+
+typedef struct IndexHeader_t {
+    uint unk0;
+    ubyte size1;
+    ubyte unk1[3];
+    uint unk2;
+} IndexHeader <open=true, bgcolor=cRed>;
+
+// todo: submeshes
+
+// todo: SZME? seems like meshes too. SZMS -> Static, SZME -> Entity?
+
+// todo: other vertexheader formats: 24, 18, 20, 2C, 14
+// todo: start straight with noclip instead of python?
+
+// todo: figure out index count
+//      stop indices when we see 0x00000000 ?
+//      see when second byte is 0x00 ?
+
+typedef int bool;
+
+local bool should_dbg_index = false;
+
+local int index_count_i;
+local int indices_start;
+typedef struct Mesh_t {
+    char magic[4] <bgcolor=cRed>;
+    uint version <open=true>;
+    uint total_size <bgcolor=cDkPurple>; // Starting from after this field
+    uint unk1[2] <open=true>;
+    uint vertex_header_size <bgcolor=cPurple>;
+
+    Assert(version == 4, "version not 4!");
+
+    if (vertex_header_size == 0x454d5a53) {  // 'SZME'
+        should_dbg_index = false;
+        // Ignore
+    } else if (vertex_header_size == 0x10) {
+        VertexHeader0x10 vertex_header;
+        Vert verts[vertex_header.vertex_count];
+
+        IndexHeader index_header;
+        uint16 indices1[index_header.size1 / 2] <bgcolor=cDkRed>;
+
+        indices_start = FTell();
+        index_count_i = 0;
+        while(ReadUInt() != 0) {
+            index_count_i += 2;
+            FSkip(4);
+        }
+        FSeek(indices_start);
+        uint16 indices2[index_count_i] <bgcolor=cLtRed>;
+        should_dbg_index = true;
+    } else if (vertex_header_size == 0x0C) {
+        VertexHeader0x0C vertex_header;
+        Vert verts[vertex_header.vertex_count];
+
+        IndexHeader index_header;
+        uint16 indices[1] <bgcolor=cDkRed>; // TODO: count
+        should_dbg_index = true;
+    } else {
+        ubyte vertex_header_unk[vertex_header_size + 4];
+        //Printf("Unimplemented header of size 0x%X\n", vertex_header_size);
+        //VertexHeader2 vertex_header2;
+        should_dbg_index = false;
+    }
+} Mesh <open=false>;
+
+//
+// Object allocation
+//
+
+// FSeek(0x122598);
+
+local ubyte szms_magic[4] = { 'S', 'Z', 'M', 'S' };
+//local TFindResults szms_res = FindAll(szms_magic, true, false, 0, 0.0, 1, 0x122598, 0x100);
+//local TFindResults szms_res = FindAll(szms_magic, true, false, 0, 0.0, 1, 0x0, 0x130000);
+local TFindResults szms_res = FindAll("SZMS");
+
+local int i;
+local int k;
+local int m_start;
+local short vcount;
+local byte b1, b2;
+for (i = 0; i < szms_res.count; i++ ) {
+    m_start = szms_res.start[i];
+
+    FSeek(szms_res.start[i]);
+    Mesh mesh;
+
+    Printf("SZMS #%04d %05X %02X at %08X | ", i, mesh.total_size, mesh.vertex_header_size, m_start);
+
+    // Log unknown fields
+
+    // Mesh header fields
+    Printf("  hdr: ");
+    //hexdump(m_start + 4, 4*4);
+    FSeek(m_start + 4+4+2);
+    b1 = ReadByte(); FSkip(1); b2 = ReadByte();
+    Printf("%02X%02X ", b1, b2);
+    hexdump(m_start + 4+4+4, 4*4);
+
+    // VertexHeader
+    if (mesh.vertex_header_size == 0x454d5a53) {  // 'SZME'
+        // Ignore
+    } else {
+        Printf("  vhdr: ");
+        hexdump(m_start + 0x18, mesh.vertex_header_size + 4);
+    }
+
+    if (should_dbg_index) {
+        FSeek(m_start + 0x20);
+        vcount = ReadUShort();
+
+        for (k = 0; k < 9 * ((0x14 - mesh.vertex_header_size) / 4); ++k) {
+            Printf(" ");            
+        }
+
+        Printf("  ihdr: ");
+        // assumes vertices of all headers are 0x24 in size
+        hexdump(m_start + 0x1C + mesh.vertex_header_size + mesh.vertex_header.vertex_count * 0x24, 4*3);
+    }
+
+    Printf("\n");
+}

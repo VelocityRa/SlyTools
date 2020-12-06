@@ -1,0 +1,332 @@
+//------------------------------------------------
+//--- 010 Editor v11.0 Binary Template
+//
+//      File: 
+//   Authors: revel8n, VelocityRa
+//   Version:
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+// TODO: SZME
+// TODO: Sanity-check that index_data is always sequential
+
+//
+// Initialization
+//
+
+LittleEndian();
+DisplayFormatHex();
+
+//
+// Utility functions
+//
+
+void hexdump(int64 pos, int n) {
+    local uchar buf[n];
+    ReadBytes(buf, pos, n);
+
+    local int i;
+    for (i = 0; i < n; ++i) {
+        Printf("%02X", buf[i]);
+        if (i % 4 == 3)
+            Printf(" ");
+    }
+}
+
+//
+// Type definitions (and Read functions)
+//
+
+
+// SZMS stuff
+
+typedef struct data_header_t
+{
+    char magic[4];
+    uint32 version;
+    uint32 data_size;
+} data_header <read=read_data_header, bgcolor=cYellow>;
+string read_data_header(data_header &v) {
+    string s;
+    SPrintf(s, "version: %d size: 0x%X", v.version, v.data_size);
+    return s;
+}
+
+typedef struct mesh_header_t
+{
+    uint32 unknown_0x00 <bgcolor=cAqua>;
+    uint16 unknown_0x04 <bgcolor=cAqua>;
+    uint16 mesh_count <format=decimal>;
+    uint32 mesh_offsets[mesh_count];
+} mesh_header <read=read_mesh_header, bgcolor=cBlue>;
+string read_mesh_header(mesh_header &v) {
+    string s;
+    SPrintf(s, "mesh#: %d unk0: 0x%08X unk1: 0x%04X",
+        v.mesh_count, v.unknown_0x00, v.unknown_0x04);
+    return s;
+}
+
+typedef struct normal_t_ {
+    float nx, ny, nz;
+} normal_t <read=read_normal>;
+string read_normal(normal_t &v) {
+    string s;
+    SPrintf(s, "%4.3f \t%4.3f \t%4.3f   \t%4.3f",
+        v.nx, v.ny, v.nz,
+        v.nx*v.nx+ v.ny*v.ny+ v.nz*v.nz);
+    return s;
+}
+
+typedef struct vertex_t
+{
+    float pos_x, pos_y, pos_z;
+    normal_t normal;
+    float texcoord_u, texcoord_v;
+    uint32 unk_0x20 <bgcolor=cAqua>;
+} vertex <read=read_vertex, bgcolor=cDkPurple>;
+string read_vertex(vertex &v) {
+    string s;
+    SPrintf(s, "[%7.2f \t%7.2f \t%7.2f] [%4.3f \t%4.3f \t%4.3f] [%4.3f \t%4.3f] \t0x%08X",
+        v.pos_x, v.pos_y, v.pos_z, v.normal.nx, v.normal.ny, v.normal.nz,
+        v.texcoord_u,  v.texcoord_v, v.unk_0x20);
+    return s;
+}
+
+typedef struct vertex_header_t
+{
+    uint32 unknown_0x10  <bgcolor=cAqua>;
+    uint16 vertex_count  <format=decimal>;
+    uint16 unknown_count <format=decimal, bgcolor=cAqua>;
+    uint32 vertex_data_offset;
+    uint32 index_header_offset;
+
+    local uint32 vertex_data_size = index_header_offset - vertex_data_offset;
+
+    // Sanity-check that all verts are of the size we assume
+    local uint32 vertex_single_size = vertex_data_size / vertex_count;
+    Assert(vertex_single_size == sizeof(vertex_t));
+} vertex_header <read=read_vertex_header, bgcolor=cPurple>;
+string read_vertex_header(vertex_header &v) {
+    string s;
+    SPrintf(s, "vtx#: %d unk#: %d vtx_off: 0x%X idx_off: 0x%X vtx_data_size: 0x%X",
+        v.vertex_count, v.unknown_count, v.vertex_data_offset, v.index_header_offset, v.vertex_data_size);
+    return s;
+}
+
+typedef struct index_header_t
+{
+    uint16 triangle_count <format=decimal>;
+    uint16 index_count    <format=decimal>;
+    uint32 index_data_offset_0;
+    uint32 index_data_offset_1;
+} index_header <read=read_index_header, bgcolor=cRed>;
+string read_index_header(index_header &v) {
+    string s;
+    SPrintf(s, "tri#: %d idx#: %d off1: 0x%X off2: 0x%X",
+        v.triangle_count, v.index_count, v.index_data_offset_0, v.index_data_offset_1);
+    return s;
+}
+
+typedef struct index_data_t(int64 start_offset)
+{
+    index_header index_hdr;
+
+    FSeek(start_offset + index_hdr.index_data_offset_0);
+    uint16  triangle_data[index_hdr.triangle_count * 3];
+
+    FSeek(start_offset + index_hdr.index_data_offset_1);
+    uint16  index_data[index_hdr.index_count];
+} index_data <read=read_index_data, bgcolor=cDkGreen>;
+string read_index_data(index_data &v) {
+    string s;
+    SPrintf(s, "");
+    return s;
+}
+
+typedef struct vertex_data_t(int64 start_offset)
+{
+    vertex_header vertex_hdr;
+
+    FSeek(start_offset + vertex_hdr.vertex_data_offset);
+    vertex vertices[vertex_hdr.vertex_count];
+    Assert(sizeof(vertices) == vertex_hdr.vertex_data_size);
+
+    FSeek(start_offset + vertex_hdr.index_header_offset);
+    index_data index_hdr(start_offset);
+} vertex_data <read=read_vertex_data, bgcolor=cDkAqua>;
+string read_vertex_data(vertex_data &v) {
+    string s;
+    SPrintf(s, "");
+    return s;
+}
+
+// SZME stuff
+
+typedef struct szme_vertex_t
+{
+    float pos_x, pos_y, pos_z;
+} szme_vertex <read=read_szme_vertex, bgcolor=cDkPurple>;
+string read_szme_vertex(szme_vertex &v) {
+    string s;
+    SPrintf(s, "[%7.3f \t%7.3f \t%7.3f]",
+        v.pos_x, v.pos_y, v.pos_z);
+    return s;
+}
+
+// first unk byte is count of unk?
+// last byte is count of something after?
+// byte 0xC is # of words after 4words
+
+typedef struct unk1_t_ {
+    float unk0 <bgcolor=cDkAqua>;
+    float unk1 <bgcolor=cDkAqua>;
+    float unk2 <bgcolor=cDkAqua>;
+} unk1_t <read=read_unk1>;
+string read_unk1(unk1_t &v) {
+    string s;
+    SPrintf(s, "%4.3f \t%4.3f \t%4.3f   \t%4.3f",
+        v.unk0, v.unk1, v.unk2,
+        v.unk0*v.unk0 + v.unk1*v.unk1 + v.unk2*v.unk2);
+    return s;
+}
+
+typedef struct szme_header_t {
+    char magic[4];
+    uint32 unk_0x04 <bgcolor=cAqua>;
+    
+    float unk_0x08 <bgcolor=cDkAqua>;
+    float unk_0x0C <bgcolor=cDkAqua>;
+    float unk_0x10 <bgcolor=cDkAqua>;
+    float unk_0x14 <bgcolor=cDkAqua>;
+    uint32 unk_0x18 <bgcolor=cAqua>;
+    uint32 unk_0x1C <bgcolor=cAqua>;
+    float unk_0x20 <bgcolor=cDkAqua>;
+    uint32 unk_0x24 <bgcolor=cAqua>;
+    uint32 unk_0x28 <bgcolor=cAqua>;
+    ubyte unk_0x2C[3] <bgcolor=cAqua>;
+    ubyte vertex_count;
+    ubyte unk_0x30[3] <bgcolor=cAqua>;
+    ubyte unk_count;
+} szme_header;
+
+// todo
+struct texcoord_t {
+    float u, v;
+};
+
+typedef struct szme_data_t
+{
+    szme_header szme_hdr;
+
+    szme_vertex vertices[szme_hdr.vertex_count];
+
+    //normal_t normal[szme_hdr.vertex_count / 3];
+    normal_t unk[10]<bgcolor=cGreen>;
+
+    // float unk_words[25];
+
+    //texcoord_t tecxcoord[szme_hdr.unk_count] <bgcolor=cGreen>;
+
+    // unk1_t unk1[szme_hdr.vertex_count];
+
+} szme_data <read=read_szme_data, bgcolor=cDkYellow>;
+string read_szme_data(szme_data &v) {
+    string s;
+    SPrintf(s, "");
+    return s;
+}
+
+
+typedef struct mesh_data_t
+{
+    data_header header;
+
+    local int64 start_offset = FTell();
+
+    mesh_header mesh_hdr;
+
+    local uint32 i = 0;
+    for (i = 0; i < mesh_hdr.mesh_count; ++i)
+    {
+        FSeek(start_offset + mesh_hdr.mesh_offsets[i]);
+
+        vertex_data vertex_data_(start_offset);
+    }
+
+    szme_data szme_data_;
+    
+} mesh_data <read=read_mesh_data, open=true, bgcolor=cDkGray>;
+string read_mesh_data(mesh_data &v) {
+    string s;
+    SPrintf(s, "");
+    return s;
+}
+
+//
+// Object allocation
+//
+
+local TFindResults szms_res = FindAll("SZMS");
+
+local int i;
+local int j;
+local int m_start;
+for (i = 0; i < szms_res.count; i++ ) {
+    m_start = szms_res.start[i];
+
+    FSeek(szms_res.start[i]);
+    mesh_data mesh;
+
+/*
+    Printf("SZMS #%04d %05X at %08X | mesh hdr unk: %08X %04X | vert hdr unk: ",
+        i, mesh.header.data_size, m_start, mesh.mesh_hdr.unknown_0x00,
+        mesh.mesh_hdr.unknown_0x04);
+
+    for (j = 0; j < mesh.mesh_hdr.mesh_count; j++) {
+        Printf("[%08X %04X] ",
+            mesh.vertex_data_[j].vertex_hdr.unknown_0x10,
+            mesh.vertex_data_[j].vertex_hdr.unknown_count);
+    }
+
+    Printf("\n");
+*/
+
+    Printf("SZME #%04d at %08X | %08X %9.2f %9.2f %9.2f %9.2f %08X %08X %7.2f %08X %08X %02X%02X%02X %02X%02X%02X %02X ",
+        i, m_start,
+        mesh.szme_data_.szme_hdr.unk_0x04,
+
+        mesh.szme_data_.szme_hdr.unk_0x08,
+        mesh.szme_data_.szme_hdr.unk_0x0C,
+        mesh.szme_data_.szme_hdr.unk_0x10,
+        mesh.szme_data_.szme_hdr.unk_0x14,
+
+        mesh.szme_data_.szme_hdr.unk_0x18,
+        mesh.szme_data_.szme_hdr.unk_0x1C,
+
+        mesh.szme_data_.szme_hdr.unk_0x20,
+
+        mesh.szme_data_.szme_hdr.unk_0x24,
+        mesh.szme_data_.szme_hdr.unk_0x28,
+
+        mesh.szme_data_.szme_hdr.unk_0x2C[0],
+        mesh.szme_data_.szme_hdr.unk_0x2C[1],
+        mesh.szme_data_.szme_hdr.unk_0x2C[2],
+
+        mesh.szme_data_.szme_hdr.unk_0x30[0],
+        mesh.szme_data_.szme_hdr.unk_0x30[1],
+        mesh.szme_data_.szme_hdr.unk_0x30[2],
+
+        mesh.szme_data_.szme_hdr.unk_count);
+
+    for (j = 0; j < mesh.mesh_hdr.mesh_count; j++) {
+        Printf("[%08X %04X] ",
+            mesh.vertex_data_[j].vertex_hdr.unknown_0x10,
+            mesh.vertex_data_[j].vertex_hdr.unknown_count);
+    }
+
+    Printf("\n");
+}

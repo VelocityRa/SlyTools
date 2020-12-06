@@ -1,0 +1,27 @@
+LittleEndian();
+DisplayFormatHex();
+
+typedef struct Resource_t {
+    char magic_fk[3];
+    char type;
+    char name[66];
+    uint16 pad0 <hidden=true>;
+    Assert(pad0 == 0);
+    uint16 unk0;  // size?
+    uint16 unk_bool;
+    uint16 unk1;  // id?
+    uint16 unk2_bf;
+    uint16 unk3_bf;
+    uint16 pad2 <hidden=true>;
+    Assert(pad2 == 0);
+} Resource <read=ResourceRead, optimize=false>;
+
+string ResourceRead(Resource& r) {
+    string s;
+    SPrintf(s, "%c  %04X  %x  %04X  %X  %X  %s",
+        r.type, r.unk0, r.unk_bool, r.unk1, r.unk2_bf, r.unk3_bf, r.name);
+    return s;
+}
+
+uint16 resource_count;
+Resource resources[resource_count];

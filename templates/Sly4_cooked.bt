@@ -1,0 +1,104 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+LittleEndian();
+DisplayFormatHex();
+
+typedef uchar NodeName[4];
+typedef uint32 NodeLength;
+
+local TFindResults texr_blocks = FindAll("TEXR");
+
+enum <ubyte> TextureFormat {
+    DXT1 = 0x86,
+    DXT45 = 0x88,
+};
+
+typedef struct TEXR_t {
+    NodeName name <hidden=true>;
+    NodeLength len <hidden=true>;
+
+    struct TXRH {
+        NodeName name <hidden=true>;
+        NodeLength len <hidden=true>;
+
+        ubyte unk_always_1 <hidden=true>; // format maybe?
+        Assert(unk_always_1 == 1, "not 1!");
+
+        uint16 unk1 <open=true>;
+        ubyte unk2 <open=true>;
+
+        uint64 id; // or something
+        char filename[0x28];
+    } txrh <open=true, read=TXRHRead, bgcolor=cRed>;
+
+    local int i = 0;
+    struct TGTF {
+        NodeName name <hidden=true>;
+        NodeLength len <hidden=true>;
+
+        ubyte unk0[24] <bgcolor=cPurple>;
+        TextureFormat format <bgcolor=cDkGreen>;
+        ubyte unk1[7] <bgcolor=cPurple>;
+        //for (i = 0; i < sizeof(unk0); ++i)
+        //    Printf("%02X ", unk0[i]);
+        //ushort unk0[(0x30 - 2 -2-2- 10)/2] <bgcolor=cPurple>;
+        //for (i = 0; i < sizeof(unk0)/2; ++i)
+        //    Printf("%-06u ", unk0[i]);
+        //Printf("\n");
+
+        BigEndian();
+        ushort width <open=true, bgcolor=cBlue>;
+        ushort height <open=true, bgcolor=cBlue>;
+
+        ushort always_1;
+        LittleEndian();
+
+        ubyte always_0[10] <bgcolor=cGray>;
+        ubyte either_50h_or_00h[0x50] <bgcolor=cGray>;
+        ubyte texture_data[len - 0x34 - 0x50] <bgcolor=cBlack>;
+    } tgtf <open=true, read=TGTFRead, bgcolor=cGreen>;
+} TEXR <open=true, read=TEXRRead, bgcolor=cYellow>;
+
+string TEXRRead(TEXR &node) {
+    string s;
+    string format;
+
+    if (node.tgtf.format == 0x86)
+        format = "DXT1";
+    else
+        format = "DXT45";
+
+    SPrintf(s, "\"%s\" | %dx%d | %s | %d | %s [0x%X]",
+        node.txrh.filename, node.tgtf.width, node.tgtf.height,
+        format, node.txrh.id, node.name, (int)node.len);
+    return s;
+}
+string TXRHRead(TXRH &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string TGTFRead(TGTF &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+
+
+
+local int i;
+for (i = 0; i < texr_blocks.count; ++i) {
+    FSeek(texr_blocks.start[i]);
+    TEXR texr;
+}

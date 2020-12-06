@@ -1,0 +1,27 @@
+LittleEndian();
+DisplayFormatHex();
+
+FSeek(0x00176FF4);
+
+typedef struct Vert_t {
+    float x,y,z;
+} Vert <read=VertRead, bgcolor=cDkYellow>;
+
+typedef struct Face_t {
+    byte idx[4];
+} Face <read=FaceRead, bgcolor=cDkRed> ;
+
+Vert verts[139];
+Face faces[100];
+
+string VertRead(Vert &m) {
+    string s;
+    SPrintf(s, "%8.3f       %8.3f       %8.3f", m.x, m.y, m.z);
+    return s;
+}
+
+string FaceRead(Face &m) {
+    string s;
+    SPrintf(s, "%3d       %3d       %3d       %3d", m.idx[0], m.idx[1], m.idx[2], m.idx[3]);
+    return s;
+}

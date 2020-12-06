@@ -1,0 +1,74 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+typedef struct Mesh_t {
+    struct Header {
+        ubyte magic[4];
+        ubyte unk0[0x1A];
+        ubyte vertex_count;
+        ubyte twotest;
+    } header <bgcolor=cYellow>;
+    
+    struct Vertex {
+        float x;
+        float y;
+        float z;
+    } vertex_data [header.vertex_count] <read=VertexRead, bgcolor=cGreen>;
+
+    struct QuadHeader {
+        ubyte unk0 <bgcolor=cPurple>;
+        ubyte usually_xC0 <bgcolor=cGray>;
+        ubyte quad_count <bgcolor=cPurple>;
+        ubyte usually_x6E <bgcolor=cGray>; // buf type? 68 vtx 6E idx
+    } quad_header <open=true, read=QuadHeaderRead>;
+
+    struct Quad {
+        ubyte indices[4];
+    } index_data [quad_header.quad_count] <read=QuadRead, bgcolor=cBlue>;
+
+} Mesh <read=MeshRead, bgcolor=cRed>;
+
+// Read functions
+string MeshRead(Mesh &o) {
+    string s;
+    SPrintf(s, "Vertices: %d (0x%X)       Quads: %d (0x%X)",
+        (int)o.header.vertex_count, (int)o.header.vertex_count,
+        (int)o.quad_header.quad_count, (int)o.quad_header.quad_count);
+    return s;
+}
+string VertexRead(Vertex &o) {
+    string s;
+    SPrintf(s, "%3.1f        %3.1f        %3.1f", o.x, o.y, o.z);
+    return s;
+}
+string QuadHeaderRead(QuadHeader &o) {
+    string s;
+    SPrintf(s, "unk0: %X", o.unk0);
+    return s;
+}
+string QuadRead(Quad &o) {
+    string s;
+    SPrintf(s, "%03u %03u %03u %03u", o.indices[0], o.indices[1], o.indices[2], o.indices[3]);
+    return s;
+}
+
+// Entry point
+
+local ubyte mesh_magic[4] = { 0x0A, 0xC0, 0x03, 0x6D };
+local TFindResults mesh_res = FindAll(mesh_magic);
+
+local int i;
+for (i = 0; i < mesh_res.count; i++ ) {
+    FSeek(mesh_res.start[i]);
+    Mesh m;
+}

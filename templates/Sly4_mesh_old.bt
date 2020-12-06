@@ -1,0 +1,132 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+LittleEndian();
+
+typedef uchar TagName[4];
+
+int64 GetNextTag(uint32 max_length) {
+    local int64 start_pos = FTell();
+
+    Printf("GetNextTag(0x%X) called at 0x%X\n", max_length, start_pos);
+ 
+    local int64 i = start_pos;
+    local int64 max_i = start_pos + max_length;
+ 
+    if (max_i > FileSize())
+        return -1;
+
+    local uchar word[4];
+   
+    while (i < max_i) {
+        ReadBytes(word, i, 4);
+
+        Printf("word: %s\n", word);
+
+        if (word == "MESH" || word == "MSHH" || word == "SMSH" ||
+            word == "MHDR" || word == "MVTX" || word == "MIDX") {
+            Printf("Tag found at 0x%X\n", i);
+            return i;
+        }
+
+        i += sizeof(TagName);
+    }
+
+    Printf("No tag found (0x%X to 0x%X)\n", start_pos, max_i);
+    return -1;
+}
+
+// TODO: find all tags once here and figure out how to find
+// children of only 1 level deep
+local TFindResults tags = FindAll(
+    "MSHH|SMSH|MHDR|MVTX|MIDX", // data
+    true, // matchcase
+    false, // wholeword
+    2, // method=REGEX 
+    0.0, // tolerance
+    1, // dir
+    FTell(), // start
+    length - sizeof(TagName) // size
+);
+
+local uint64 children_count = children_found.count;
+Printf("Found %d children\n", children_count);
+
+struct Node;
+
+typedef struct Node_t (TagName tag_name) {
+    TagName tag;
+    //Assert(magic == tag_name, "Invalid magic");
+
+    uint32 length;
+    
+    Printf("%s [0x%X]\n", tag, (int)length);
+    
+    byte data[length - 4];
+    FSeek(FTell() - sizeof(data));
+
+    //local children_found = GetChildren(length - sizeof(TagName));
+
+    local int child_i;
+    local TagName child_tag;
+    for (child_i = 0; child_i < children_count; child_i += 1) {
+        FSeek(children_found.start[child_i]);
+
+        ReadBytes(child_tag, FTell(), 4);
+        FSeek(FTell());
+
+        Node child(child_tag)[children_count] <read=NodeRead>;
+    }
+
+    FSeek(FTell() + length - 4);
+} Node <optimize=false, read=NodeRead, open=true>;
+
+string NodeRead(Node &node) {
+    string s;
+    SPrintf( s, "%s [0x%X]", node.tag, (int)node.length);
+    return s;
+}
+
+Node root("MESH");
+
+
+/*
+char main_tag[4];
+Assert(main_tag == "MESH", "Not a Sly 4 MESH file");
+uint32 main_len;
+
+char mshh_tag[4];
+Assert(mshh_tag == "MSHH", "unexpected tag");
+uint32 mshh_len;
+byte mshh_data[mshh_len - 4];
+
+char smsh_tag[4];
+Assert(smsh_tag == "SMSH", "unexpected tag");
+uint32 smsh_len;
+byte smsh_data[smsh_len - 4];
+
+char mhdr_tag[4];
+Assert(mhdr_tag == "MHDR", "unexpected tag");
+uint32 mhdr_len;
+byte mhdr_data[mhdr_len - 4];
+
+char mvtx_tag[4];
+Assert(mvtx_tag == "MVTX", "unexpected tag");
+uint32 mvtx_len;
+byte mvtx_data[mvtx_len - 4];
+
+char midx_tag[4];
+Assert(midx_tag == "MIDX", "unexpected tag");
+uint32 midx_len;
+byte midx_data[midx_len - 4];
+*/

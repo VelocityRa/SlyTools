@@ -1,0 +1,324 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+LittleEndian();
+DisplayFormatHex();
+
+typedef uchar NodeName[4];
+typedef uint32 NodeLength;
+
+local TFindResults smsh_blocks = FindAll("SMSH");
+local TFindResults medg_blocks = FindAll("MEDG");
+
+local int is_type_2 = (medg_blocks.count > 0);
+
+if (is_type_2)
+    Assert(medg_blocks.count == smsh_blocks.count, "MEDG count != SMSH count");
+
+if (is_type_2)
+    Printf("Identified Type 2 MESH\n");
+else
+    Printf("Identified Type 1 MESH\n");
+
+// Type 1 definitions
+
+local uint v_bytes;
+local uint16 g_vertex_count;
+local uint16 g_index_count;
+
+typedef struct SMSH1Block_t {
+    local int64 smsh_end;
+    struct SMSH1 {
+        NodeName name <hidden=true>;
+        NodeLength len <hidden=true>;
+
+        local int64 mhdr_end = FindFirst("MVTX", true, false, 0, 0.0, 1, FTell());
+
+        struct MHDR1 {
+            NodeName name <hidden=true>;
+            NodeLength len <hidden=true>;
+            
+            byte unk <hidden=true>;
+            uint16 vertex_count;
+            uint16 index_count;
+
+            g_vertex_count = vertex_count;
+            g_index_count = index_count;
+
+            byte mhdr_data[mhdr_end - FTell()];
+        } mhdr <open=true, read=MHDR1Read, bgcolor=cBlue>;
+    } smsh <open=true, read=SMSH1Read, bgcolor=cPurple>;
+
+    struct MVTX {
+        NodeName name <hidden=true>;
+        NodeLength len <hidden=true>;
+
+        local int64 mvtx_end = FindFirst("MIDX", true, false, 0, 0.0, 1, FTell());
+
+        v_bytes = (len - 4) / g_vertex_count;
+            
+        // TODO: more formats
+        switch(v_bytes) {
+            case 6:
+                struct VertexType0 {
+                    hfloat pos_x, pos_y, pos_z;
+                } vertices[g_vertex_count] <optimize=false, bgcolor=cGreen>;
+                break;
+            case 14:
+            case 17:
+            case 18:
+            case 23:
+            case 25:
+            case 26:
+                struct VertexType1 {
+                    hfloat pos_x, pos_y, pos_z;
+                    hfloat unk0;
+                    hfloat normal;
+                    hfloat tex_u, tex_v;
+                    ubyte unk1[v_bytes - 14];
+                } vertices[g_vertex_count] <optimize=false, bgcolor=cGreen>;
+                break;
+            case 20:
+                struct VertexType2 {
+                    float pos_x,  pos_y, pos_z;
+                    hfloat unk0;
+                    hfloat tex_u, tex_v;
+                    ubyte unk1[v_bytes - 20];
+                } vertices[g_vertex_count] <bgcolor=cGreen>;
+                break;
+            default:
+                Printf("Warning: unknown format: %d / %d = %d\n", len - 4, g_vertex_count, v_bytes);
+                byte vertices_unk[mvtx_end - FTell()];
+        }
+        FSeek(mvtx_end);
+    } mvtx <open=true, read=MVTXRead, bgcolor=cGreen>;
+
+    local int64 midx_end;
+    struct MIDX {
+        NodeName name <hidden=true>;
+        NodeLength len <hidden=true>;
+
+        BigEndian();
+        uint16 indices[g_index_count];
+        LittleEndian();
+    } midx <open=true, read=MIDXRead, bgcolor=cRed>;
+} SMSH1Block <open=true, optimize=false, bgcolor=cLtGray>;
+
+// Type 2 definitions
+
+typedef struct SMSH2_t {
+    NodeName name <hidden=true>;
+    NodeLength len <hidden=true>;
+
+    local int64 mhdr_end = FindFirst("MEDG", true, false, 0, 0.0, 1, FTell());
+
+    struct MHDR2 {
+        NodeName name <hidden=true>;
+        NodeLength len <hidden=true>;
+
+        byte mhdr_data[len - 4];
+    } mhdr <open=true, read=MHDR2Read, bgcolor=cBlue>;
+
+    struct MEDG {
+        NodeName name <hidden=true>;
+        NodeLength len <hidden=true>;
+
+        // Printf("medg_end: 0x%X\n", medg_end);
+        ubyte medg_data[len - 4];
+    } medg <open=false, read=MEDGRead, bgcolor=cYellow>;
+} SMSH2 <open=true, read=SMSH2Read, optimize=false, bgcolor=cPurple>;
+
+local TFindResults outb_blocks;
+if (is_type_2)
+    outb_blocks = FindAll("OUTB");
+
+typedef struct OUTL_t {
+    NodeName name <hidden=true>;
+    NodeLength len <hidden=true>;
+
+    struct OTLH {
+        NodeName name <hidden=true>;
+        NodeLength len <hidden=true>;
+
+        byte otlh_data[len - 4];
+     } otlh <open=false, read=OTLHRead, bgcolor=cAqua>;
+
+    // Count number of OUTBs in this OUTL only
+    local uint32 outb_count = 0;
+    local int64 outb_start;
+    local uint32 i;
+    for (i = 0; i < outb_blocks.count; ++i) {
+        outb_start = outb_blocks.start[i];
+
+        if (FTell() <= outb_start && outb_start < FTell() + len) {
+            // Printf("found outb between 0x%X and 0x%X at 0x%X\n",
+            //     FTell(), FTell() + len, outb_start);
+            outb_count += 1;
+        }
+    }
+
+    struct OUTB {
+        NodeName name <hidden=true>;
+        NodeLength len <hidden=true>;
+
+        struct OUTA {
+            NodeName name <hidden=true>;
+            NodeLength len <hidden=true>;
+            
+            byte outa_data[len - 4];
+        } outa <open=false, read=OUTARead, bgcolor=cPurple>;
+
+        struct OUTV {
+            NodeName name <hidden=true>;
+            NodeLength len <hidden=true>;
+            
+            byte outv_data[len - 4];
+        } outv <open=false, read=OUTVRead, bgcolor=cRed>;
+
+        struct OUTE {
+            NodeName name <hidden=true>;
+            NodeLength len <hidden=true>;
+            
+            byte oute_data[len - 4];
+        } oute <open=false, read=OUTERead, bgcolor=cGreen>;
+
+        struct OUTO {
+            NodeName name <hidden=true>;
+            NodeLength len <hidden=true>;
+            
+            byte outo_data[len - 4];
+        } outo <open=false, read=OUTORead, bgcolor=cBlue>;
+
+        struct OUTW {
+            NodeName name <hidden=true>;
+            NodeLength len <hidden=true>;
+            
+            byte outw_data[len - 4];
+        } outw <open=false, read=OUTWRead, bgcolor=cBlue>;
+    } outb[outb_count] <open=true, read=OUTBRead, optimize=false, bgcolor=cPurple>;
+} OUTL <open=true, read=OUTLRead, optimize=false, bgcolor=cDkGreen>;
+
+// Main MESH definition
+
+struct MESH {
+    NodeName name <hidden=true>;
+    NodeLength len <hidden=true>;
+
+    struct MSHH {
+        NodeName name <hidden=true>;
+        NodeLength len <hidden=true>;
+
+        byte mshh_data[len - sizeof(NodeLength)];
+    } mshh <open=true, read=MSHHRead, bgcolor=cAqua>;
+
+    if (!is_type_2) {
+        SMSH1Block smsh_block[smsh_blocks.count];
+    } else {
+        SMSH2 smsh[smsh_blocks.count];
+        
+        local TFindResults outl_blocks = FindAll("OUTL");
+        
+        OUTL outl[outl_blocks.count];
+    }
+} mesh <open=true, read=MESHRead, bgcolor=cDkGray>;
+
+// Type 1 read functions
+
+string MESHRead(MESH &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string MSHHRead(MSHH &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string SMSH1Read(SMSH1 &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string MHDR1Read(MHDR1 &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string MVTXRead(MVTX &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string MIDXRead(MIDX &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+
+// Type 2 read functions
+
+string SMSH2Read(SMSH2 &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string MHDR2Read(MHDR2 &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string MEDGRead(MEDG &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string OUTLRead(OUTL &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string OTLHRead(OTLH &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string OUTBRead(OUTB &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string OUTARead(OUTA &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string OUTVRead(OUTV &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string OUTERead(OUTE &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string OUTORead(OUTO &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}
+string OUTWRead(OUTW &node) {
+    string s;
+    SPrintf(s, "%s [0x%X]", node.name, (int)node.len);
+    return s;
+}

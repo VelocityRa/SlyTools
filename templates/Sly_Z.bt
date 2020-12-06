@@ -1,0 +1,36 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+DisplayFormatHex();
+
+struct Header {
+    byte magic_0_div;
+
+    byte magic_01;
+    byte magic_02;
+    byte magic_03;
+    byte magic_04;
+    byte magic_05;
+    byte magic_06;
+
+    char str1_0[2];
+
+    byte magic_09_div;
+
+    char str1_1[8];
+
+    byte magic_12_div;
+
+    char str1[5];
+
+} header <open=true>;

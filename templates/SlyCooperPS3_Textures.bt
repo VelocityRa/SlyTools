@@ -1,0 +1,198 @@
+LittleEndian();
+DisplayFormatHex();
+
+void hexdump(int64 pos, int n) {
+    local uchar buf[n];
+    ReadBytes(buf, pos, n);
+
+    local int i;
+    for (i = 0; i < n; ++i) {
+        Printf("%02X", buf[i]);
+        if (i % 4 == 3)
+            Printf(" ");
+    }
+}
+
+// CLUT meta table.
+typedef struct CLUT_META_TABLE_t {
+
+  struct CLUT_HEADER {
+    short numRecords;
+  } header <bgcolor=cPurple>;
+
+  typedef struct CLUT_RECORD_t {
+    int unk0 <bgcolor=cAqua>;
+    short numColors;
+    short size;
+    int dataOffset;  // Relative to start of color palette data.
+  } CLUT_RECORD <read=CLUT_RECORD_Read, optimize=false>;
+  CLUT_RECORD record[ header.numRecords ];
+
+} CLUT_META_TABLE <bgcolor=cDkPurple>;
+
+string CLUT_RECORD_Read(CLUT_RECORD &v) {
+    string s;
+    SPrintf(s, "%03d %d %08X %08X",
+        v.numColors, v.size, v.dataOffset, v.unk0);
+    return s;
+}
+
+// Image meta table.
+typedef struct IMAGE_META_TABLE_t {
+
+  struct IMAGE_HEADER {
+    short numRecords;
+  } header <bgcolor=cYellow>;
+
+  typedef struct IMAGE_RECORD_t {
+    short width;
+    short height;
+    int unk0 <bgcolor=cAqua>;
+    char psm;  // Pixel storage format (TEX0)
+    char tbw;  // Texture buffer width (TEX0)
+    short unk1[3] <bgcolor=cAqua>;
+    int dataOffset;  // Relative to start of color palette data.
+  } IMAGE_RECORD <read=IMAGE_RECORD_Read>;
+  IMAGE_RECORD record[ header.numRecords ]; 
+
+} IMAGE_META_TABLE <bgcolor=cDkYellow>;
+
+string IMAGE_RECORD_Read(IMAGE_RECORD &v) {
+    string s;
+    SPrintf(s, "%04dx%04d %02X %02X %08X %02X %02X %02X",
+        v.width, v.height, v.psm, v.tbw, v.unk0, v.unk1[0], v.unk1[1], v.unk1[2]);
+    return s;
+}
+
+// Texture table (combines images with color palettes).
+typedef struct TEXTURE_TABLE_t {
+
+  struct TEXTURE_HEADER {
+    short numTextures;
+    char unk[0x18] <bgcolor=cAqua>;
+  } header <bgcolor=cGreen>;
+
+  struct TEXTURE_RECORD {
+    uint16 unk0x0 <bgcolor=cAqua>;
+    uint16 unk0x2 <bgcolor=cAqua>;
+    char numImages;
+    char numCluts;
+
+    short imageIndex[numImages];
+    short clutIndex[numCluts];
+    uint16 unk3 <bgcolor=cAqua>;
+    uint16 unk3_2 <bgcolor=cAqua>;
+    uint32 unk4 <bgcolor=cAqua>;
+    uint32 unk5 <bgcolor=cAqua>;
+    uint32 unk6 <bgcolor=cAqua>;
+    uint16 unk7 <bgcolor=cAqua>;
+    uint16 unk7_2 <bgcolor=cAqua>;
+    short unk2 <bgcolor=cAqua>;
+    if (unk2 > 0)
+      char unk8[0x1C] <bgcolor=cAqua>;
+  } texture[ header.numTextures ] <optimize=false, read=TEXTURE_RECORD_Read>;
+
+} TEXTURE_TABLE <bgcolor=cDkGreen>;
+
+// Texture table (combines images with color palettes).
+typedef struct TEXTURE_TABLE2_t {
+
+  struct TEXTURE_HEADER2 {
+    short numTextures;
+    short unk_0x2;
+  } header <bgcolor=cGreen>;
+
+  local int tex_rec_id = 0;
+  local string bookmark_name;
+
+  struct TEXTURE_RECORD2 {
+    hexdump(FTell(), 21);
+    short flags <bgcolor=cBlue>; // not sure
+    short id <bgcolor=cBlue>;    // not sure
+    uint32 unk_color0 <bgcolor=cBlue>;
+    uint32 unk_color1 <bgcolor=cBlue>;
+
+    SPrintf(bookmark_name, "tex_%d", tex_rec_id);
+    AddBookmark(FTell()-8, bookmark_name, "uint64", -1, unk_color0, unk_color1);
+    uint32 unk_i0 <bgcolor=cAqua>;
+    short unk_sh0 <bgcolor=cAqua>;
+    byte unk5 <bgcolor=cAqua>;
+    byte unk7 <bgcolor=cAqua>;
+    byte unk_flag;
+
+    if (unk_flag) {
+        Printf(" | ");
+        hexdump(FTell(), 22);
+        byte unk3[8+8] <bgcolor=cDkBlue>;
+        //byte unk3[8] <bgcolor=cDkBlue>;
+        //float unk_f0 <bgcolor=cDkBlue>; // wrong
+        //float unk_f1 <bgcolor=cDkBlue>; // wrong
+        byte unk6[6] <bgcolor=cDkBlue>;
+        Printf(" | ");
+        hexdump(FTell(), 11);
+        byte unk4[11] <bgcolor=cDkBlue>;
+    } else {
+        Printf(" | ");
+        hexdump(FTell(), 0x1);
+        byte unk1[0x1] <bgcolor=cBlue>;
+        Printf(" | ");
+        hexdump(FTell(), 0x4);
+        byte unk2[0x4] <bgcolor=cYellow>;
+    }
+
+    char numImages;
+    char numCluts;
+
+    short imageIndex[numImages];
+    short clutIndex[numCluts];
+
+    Printf("\n");
+    tex_rec_id += 1;
+  } texture[ header.numTextures ] <optimize=false, read=TEXTURE_RECORD2_Read>;
+
+} TEXTURE_TABLE2 <bgcolor=cDkGreen>;
+
+typedef struct UNK_TABLE_t {
+    uint16 u0x0;
+    uint16 u0x2;
+    uint16 u0x4;
+    uint16 u0x6;
+} UNK_TABLE <read=UNK_TABLE_Read>;
+
+string TEXTURE_RECORD_Read(TEXTURE_RECORD &v) {
+    string s;
+    SPrintf(s, "%04X %04X %02d %02d %04X %04X %08X %08X %08X %04X %04X  %d",
+        v.unk0x0, v.unk0x2, v.numImages, v.numCluts, v.unk3, v.unk3_2,
+        v.unk4, v.unk5, v.unk6, v.unk7, v.unk7_2, v.unk2);
+    return s;
+}
+
+string TEXTURE_RECORD2_Read(TEXTURE_RECORD2 &v) {
+    string s;
+    if (v.unk_flag != 0) {
+        //SPrintf(s, "id: %04X flags: %04X f0: %f f1: %f",
+        //    v.id, v.flags, v.unk_f0, v.unk_f1);
+        SPrintf(s, "id: %04X flags: %04X",
+            v.id, v.flags);
+    } else {
+        SPrintf(s, "id: %04X flags: %04X",
+            v.id, v.flags);
+    }
+    return s;
+}
+
+string UNK_TABLE_Read(UNK_TABLE &v) {
+    string s;
+    SPrintf(s, "%04X %04X %04X %04X",
+        v.u0x0, v.u0x2, v.u0x4, v.u0x6);
+    return s;
+}
+
+//FSeek(0x4AFC); // uw_exterior_approach
+FSeek(0x55E4); // jb_intro
+//FSeek(0x2465); // splash
+
+CLUT_META_TABLE clut_meta_table;
+IMAGE_META_TABLE image_meta_table;
+TEXTURE_TABLE2 texture_table;
+UNK_TABLE unk_table[250];

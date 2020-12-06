@@ -1,0 +1,19 @@
+typedef struct WAC_t {
+    uint32 size;
+    char name[23];
+    char type;
+    uint32 offset;
+} WAC <open=false, read=WACRead>;
+
+// ---
+
+while(!FEof())
+    WAC wac;
+
+// ---
+
+string WACRead(WAC &m) {
+    string s;
+    SPrintf(s, "%08X %08X %c %s", m.offset, m.size, m.type, m.name);
+    return s;
+}

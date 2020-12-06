@@ -1,0 +1,72 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+LittleEndian();
+DisplayFormatHex();
+
+struct BHeader {
+    uint32 unk_const0[3] <bgcolor=cDkYellow>;
+
+    uint16 _;
+    uint16 _;
+
+    uint16 _;
+    uint16 _;
+
+    BigEndian();
+    uint32 file_size_unk;
+    LittleEndian();
+
+    ubyte unk0[0x40];
+
+    ubyte unk_const1[0x28+0x4] <bgcolor=cDkYellow>;
+} header <bgcolor=cYellow, open=true>;
+
+const uint ENTRY_SIZE = 0xC;
+
+typedef struct BRecord_t(uint record_size) {
+    struct RecordHeader {
+        uint16 flags <format=binary>;
+        uint16 always_0;
+
+        uint32 always_0;
+
+        uint32 marker_magic<bgcolor=cRed>;
+    } header <bgcolor=cGreen>;
+    
+    local uint entry_count =
+        (record_size - sizeof(RecordHeader)) / ENTRY_SIZE;
+
+    struct RecordEntry {
+        uint32 unk0;
+        uint32 unk1;
+        uint32 unk2;    
+    } entry[entry_count] <bgcolor=cAqua>;
+} BRecord <bgcolor=cPurple, read=BRecordRead>;
+
+string BRecordRead(BRecord &rec) {
+    string s;
+    SPrintf( s, "Flags: 0x%X", (int)rec.header.flags );
+    return s;
+}
+
+local uchar marker_bytes[4] = { 0xFF, 0xFF, 0xFF, 0xF8 };  
+local TFindResults markers = FindAll(marker_bytes);
+
+local uint i;
+local uint record_size;
+for (i = 0; i < markers.count - 1; i++) {
+    record_size = markers.start[i + 1] - markers.start[i] + 1;
+
+    BRecord rec(record_size);
+}
