@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
         stream_write(wac_ofs, (u32) 0);
 
 #ifdef NDEBUG
-        printf("Reading files");
+        printf("Packing files");
 #endif
 
         for (auto &p : std::filesystem::recursive_directory_iterator(input_dir_path)) {

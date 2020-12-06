@@ -46,10 +46,10 @@ WACEntries parse_wac(std::istream &wac_data) {
 int main(int argc, char *argv[]) {
     try {
         if (argc <= 2)
-            throw std::runtime_error(std::string(argv[0]) + " <input_file> <output_dir>");
+            throw std::runtime_error(std::string(argv[0]) + " <input_file> [<output_dir>]");
 
         const std::string wac_path = argv[1];
-        const std::string output_path = argv[2];
+        const std::string output_path = (argc == 3) ? argv[2] : wac_path + "/extracted";
 
         std::string wal_path = wac_path;
         wal_path.back() = 'L';
