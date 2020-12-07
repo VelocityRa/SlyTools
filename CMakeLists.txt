@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(sly_tools LANGUAGES CXX)
+project(SlyTools LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
