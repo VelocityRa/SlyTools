@@ -1,12 +1,14 @@
 ## Tools
 
 ### Unpacker
-Input: `WAC` + `WAL` file pair
-Output: Files contained within
+**Input**: `WAC` + `WAL` file pair
+
+**Output**: Files contained within the archive
 
 ### Packer
-Input: Directory with files to pack
-Output: `WAC` + `WAL` file pair
+**Input**: Directory with files to archive
+
+**Output**: `WAC` + `WAL` file pair
 
 ### Compressor
 Compresses files to the LZSS-derived format that the official game expects for Sly level files.
