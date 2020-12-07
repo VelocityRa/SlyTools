@@ -25,3 +25,6 @@ No detailed instructions yet, see `sly_bake.bat` and modify the paths in it acco
 
 ### Modifying / re-compressing levels
 No detailed instructions yet, see `sly_bake.bat` and modify the paths in it accordingly.
+
+### Asset List
+A Google Sheet with all the official game's assets [is maintaned here](https://docs.google.com/spreadsheets/d/1bdhTl2IvXVWOjnjhpgUTH0kg6e-RcioezIYrsi-_mso/edit?usp=sharing)
