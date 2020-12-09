@@ -13,30 +13,25 @@ int main(int argc, char *argv[]) {
         if (argc < 2)
             throw std::runtime_error(std::string(argv[0]) + " <input_file> [<output_dir>]");
 
-        const std::string wac_path_string = argv[1];
-        const std::filesystem::path wac_path{ wac_path_string };
-
-        std::filesystem::path output_path;
-
-        if (argc < 3)
-             output_path = wac_path.parent_path() / "extracted";
-        else output_path = argv[2];
-
-        std::filesystem::create_directory(output_path);
-
-        std::string wal_path_string = wac_path_string;
+        const std::filesystem::path wac_path{ argv[1] };
+        std::string wal_path_string{ argv[1] };
         wal_path_string.back() = 'L';
 
-        std::ifstream wac_ifs(wac_path_string, std::ios::binary | std::ios::in | std::ios::beg);
+        std::filesystem::path output_path;
+        if (argc < 3)
+            output_path = wac_path.parent_path() / "extracted";
+        else
+            output_path = argv[2];
+        std::filesystem::create_directory(output_path);
+
+        std::ifstream wac_ifs(wac_path, std::ios::binary | std::ios::in | std::ios::beg);
         if (!wac_ifs.is_open())
-            throw std::runtime_error("Failed to open: " + wac_path_string);
+            throw std::runtime_error("Failed to open: " + wac_path.string());
         wac_ifs.unsetf(std::ios::skipws);
 
         const auto wac_entries = parse_wac(wac_ifs);
-
         std::ifstream wal_ifs(wal_path_string, std::ios::binary | std::ios::in | std::ios::beg);
-        //printf("%s", output_path.string().c_str());
-
+        
         for (const auto &entry : wac_entries) {
             const auto out_path = output_path / (entry.name + "_" + (char)entry.type);
 

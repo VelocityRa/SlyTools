@@ -1,13 +1,13 @@
 #pragma once
 
 #include "types.hpp"
+#include "stream_utils.hpp"
 
 #include <istream>
 #include <string>
 #include <vector>
 #include <cstring>
 
-#include "stream_utils.hpp"
 #include <string>
 
 constexpr size_t SECTOR_SIZE = 2048;

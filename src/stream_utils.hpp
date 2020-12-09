@@ -1,8 +1,9 @@
 #pragma once
 
+#include "types.hpp"
+
 #include <istream>
 #include <ostream>
-#include "types.hpp"
 
 template<typename T>
 void stream_read(std::istream &stream, T &data) {
