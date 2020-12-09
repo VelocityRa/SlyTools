@@ -31,7 +31,7 @@ This is a dump of everything that I have, some of them might have been superseed
     ```
 1) Run this to unpack the archive:
    ```cmd
-   sly_unpacker.exe $USRDIR/Sly1/SLY.WAC
+   sly_unpacker.exe $USRDIR/Sly1/SLY.WAC .
    ```
    After a while you should see an `extracted/` dir in there, with all the games' files.
 
