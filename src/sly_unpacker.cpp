@@ -33,8 +33,6 @@ int main(int argc, char *argv[]) {
 
         const auto wac_entries = parse_wac(wac_ifs);
 
-        // TODO: This is super slow but seeking didn't seem to work (see commented code below)
-        //const auto wal_data = filesystem::file_read(wal_path);
         std::ifstream wal_ifs(wal_path_string, std::ios::binary | std::ios::in | std::ios::beg);
         //wal_ifs.unsetf(std::ios::skipws);
 
