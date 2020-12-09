@@ -4,9 +4,10 @@ project(SlyTools LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 # For MinGW
-set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
-
-link_libraries(stdc++fs)
+if (MINGW)
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
+    link_libraries(stdc++fs)
+endif()
 
 add_library(fs_utils STATIC src/fs.cpp src/fs.cpp src/fs.hpp)
 
