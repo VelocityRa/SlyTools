@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         const std::string output_path = (argc == 3) ? argv[2] : input_path + ".compr";
 
         printf("Opening %s\n", input_path.c_str());
-        const auto input_data = file_read(input_path);
+        const auto input_data = filesystem::file_read(input_path);
         const auto input_size = input_data.size();
 
         Buffer output_data;
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
 
         flush_to_output();
 
-        file_write(output_path, output_data);
+        filesystem::file_write(output_path, output_data);
 
     } catch (const std::runtime_error &e) {
         printf("Error: %s\n", e.what());

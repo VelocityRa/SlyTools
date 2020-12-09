@@ -17,4 +17,4 @@ using f32 = float;
 using f64 = double;
 
 using Byte = u8;
-#define Buffer std::vector<Byte>
+using Buffer = std::vector<Byte>;
