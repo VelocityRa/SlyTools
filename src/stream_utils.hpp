@@ -2,6 +2,7 @@
 
 #include <istream>
 #include <ostream>
+#include "types.hpp"
 
 template<typename T>
 void stream_read(std::istream &stream, T &data) {
@@ -16,4 +17,3 @@ void stream_write(std::ostream &stream, const T &data) {
 void stream_write_buf(std::ostream &stream, const Buffer &data) {
     stream.write(reinterpret_cast<const char *>(data.data()), data.size());
 }
-

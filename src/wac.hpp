@@ -7,6 +7,8 @@
 #include <vector>
 #include <cstring>
 
+#include "stream_utils.hpp"
+
 constexpr size_t SECTOR_SIZE = 2048;
 constexpr size_t WAC_ENTRY_NAME_LEN = 0x17;
 
@@ -20,13 +22,13 @@ enum class WACType : char {
 
 struct WACEntry {
     std::string name;
-    WACType type;
-    u32 offset;
-    u32 size;
-    Buffer data;
+    WACType type{'A'};
+    u32 offset{0};
+    u32 size{0};
+    Buffer data{0};
 };
 
-using WACEntries = std::vector<WACEntry>;
+#define WACEntries std::vector<WACEntry>
 
 static WACEntries parse_wac(std::istream &wac_data) {
     u32 entry_count{};
@@ -36,7 +38,7 @@ static WACEntries parse_wac(std::istream &wac_data) {
     WACEntries wac_entries;
     wac_entries.reserve(entry_count);
 
-    for (auto i = 0; i < entry_count; ++i) {
+    for (unsigned i = 0; i < entry_count; ++i) {
         WACEntry entry;
 
         char name[WAC_ENTRY_NAME_LEN]{};
