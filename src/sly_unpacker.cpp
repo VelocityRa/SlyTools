@@ -16,12 +16,13 @@ int main(int argc, char *argv[]) {
         const std::string wac_path_string = argv[1];
         const std::filesystem::path wac_path{ wac_path_string };
 
-        std::string output_path;
+        std::filesystem::path output_path;
 
         if (argc < 3)
-            if (wac_path.has_parent_path()) output_path = wac_path.parent_path().string();
-            else                            output_path = "./extracted";
-        else                                output_path = argv[2];
+             output_path = wac_path.parent_path() / "extracted";
+        else output_path = argv[2];
+
+        std::filesystem::create_directory(output_path);
 
         std::string wal_path_string = wac_path_string;
         wal_path_string.back() = 'L';
@@ -34,10 +35,10 @@ int main(int argc, char *argv[]) {
         const auto wac_entries = parse_wac(wac_ifs);
 
         std::ifstream wal_ifs(wal_path_string, std::ios::binary | std::ios::in | std::ios::beg);
-        //wal_ifs.unsetf(std::ios::skipws);
+        //printf("%s", output_path.string().c_str());
 
         for (const auto &entry : wac_entries) {
-            const auto out_path = output_path + "/" + entry.name + "_" + (char) entry.type;
+            const auto out_path = output_path / (entry.name + "_" + (char)entry.type);
 
 //            if (entry.offset==0x00000469)
 //                assert(false);
