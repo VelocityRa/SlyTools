@@ -32,9 +32,9 @@ namespace filesystem {
                     std::istream_iterator<u8>(file),
                     std::istream_iterator<u8>());
 
-#ifndef NDEBUG
+    #ifndef NDEBUG
         printf("Read %zu bytes\n", data.size());
-#endif
+    #endif
         return data;
     }
 
@@ -49,9 +49,9 @@ namespace filesystem {
         // TODO: Needed?
         file.unsetf(std::ios::skipws);
 
-#ifndef NDEBUG
+    #ifndef NDEBUG
         printf("Writing %zu bytes\n", data.size());
-#endif
+    #endif
 
         file.write(reinterpret_cast<const char *>(data.data()), data.size());
     }

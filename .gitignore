@@ -1,6 +1,9 @@
 tests/
 .idea/
 
+build/
+src/.vs/
+
 ### C++ template
 # Compiled Object files
 *.slo

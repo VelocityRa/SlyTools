@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.hpp"
+
 #include <istream>
 #include <ostream>
 
@@ -16,4 +18,3 @@ void stream_write(std::ostream &stream, const T &data) {
 void stream_write_buf(std::ostream &stream, const Buffer &data) {
     stream.write(reinterpret_cast<const char *>(data.data()), data.size());
 }
-

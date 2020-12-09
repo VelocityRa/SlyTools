@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
         std::ofstream wal_ofs(wal_path, std::ios::binary | std::ios::trunc);
 
         u32 wal_size{};
-        u64 wal_next_sector_offset{};
+        u32 wal_next_sector_offset{};
         u32 wac_entry_count{};
 
         // We'll write the entry count here later
