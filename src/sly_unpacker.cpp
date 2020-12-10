@@ -1,14 +1,16 @@
-#include "types.hpp"
 #include "fs.hpp"
+#include "types.hpp"
 #include "wac.hpp"
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <stdexcept>
-#include <filesystem>
 
-int main(int argc, char *argv[]) {
+using fs = std::filesystem;
+
+int main(int argc, char* argv[]) {
     try {
         if (argc < 2)
             throw std::runtime_error(std::string(argv[0]) + " <input_file> [<output_dir>]");
@@ -31,12 +33,12 @@ int main(int argc, char *argv[]) {
 
         const auto wac_entries = parse_wac(wac_ifs);
         std::ifstream wal_ifs(wal_path_string, std::ios::binary | std::ios::in | std::ios::beg);
-        
-        for (const auto &entry : wac_entries) {
+
+        for (const auto& entry : wac_entries) {
             const auto out_path = output_path / (entry.name + "_" + (char)entry.type);
 
-//            if (entry.offset==0x00000469)
-//                assert(false);
+            //            if (entry.offset==0x00000469)
+            //                assert(false);
 
             Buffer file_data;
             file_data.resize(entry.size);
@@ -47,7 +49,7 @@ int main(int argc, char *argv[]) {
             out_ofs.write((const char*)file_data.data(), entry.size);
         }
 
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error& e) {
         printf("Error: %s\n", e.what());
         return 1;
     }

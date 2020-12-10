@@ -1,12 +1,12 @@
 #pragma once
 
-#include "types.hpp"
 #include "stream_utils.hpp"
+#include "types.hpp"
 
+#include <cstring>
 #include <istream>
 #include <string>
 #include <vector>
-#include <cstring>
 
 #include <string>
 
@@ -31,7 +31,7 @@ struct WACEntry {
 
 using WACEntries = std::vector<WACEntry>;
 
-static WACEntries parse_wac(std::istream &wac_data) {
+static WACEntries parse_wac(std::istream& wac_data) {
     u32 entry_count{};
     stream_read(wac_data, entry_count);
     printf("Entry count: %d\n", entry_count);

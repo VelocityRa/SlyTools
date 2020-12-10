@@ -1,12 +1,12 @@
 #pragma once
 
 #include "types.hpp"
+
+#include <filesystem>
 #include <string_view>
 
 namespace filesystem {
+Buffer file_read(std::string_view filename);
 
-	Buffer file_read(std::string_view filename);
-
-	void file_write(std::string_view filename, const Buffer &data);
-
-}
+void file_write(std::string_view filename, const Buffer& data);
+}  // namespace filesystem

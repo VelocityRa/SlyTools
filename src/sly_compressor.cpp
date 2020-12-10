@@ -1,24 +1,24 @@
-#include "types.hpp"
 #include "fs.hpp"
+#include "types.hpp"
 
+#include <algorithm>
 #include <array>
 #include <fstream>
 #include <iterator>
-#include <vector>
-#include <stdexcept>
 #include <optional>
-#include <algorithm>
+#include <stdexcept>
+#include <vector>
 
 // Sliding dictionary helper class
 
-template<typename T, size_t Size>
+template <typename T, size_t Size>
 class SlidingDict {
-    using reference = T &;
-    using const_reference = const T &;
-    using pointer = T *;
-    using const_pointer = const T *;
+    using reference = T&;
+    using const_reference = const T&;
+    using pointer = T*;
+    using const_pointer = const T*;
 
-public:
+   public:
     bool push(T elem) {
         array[index] = elem;
 
@@ -32,7 +32,7 @@ public:
         size_t size;
     };
 
-    std::optional<LookupResult> look_up(const Buffer &lookup_buf, size_t lookup_index) {
+    std::optional<LookupResult> look_up(const Buffer& lookup_buf, size_t lookup_index) {
         // TODO
         return {};
     }
@@ -52,7 +52,7 @@ public:
 
     constexpr const_reference operator[](size_t idx) const noexcept { return array[idx]; };
 
-private:
+   private:
     std::array<T, Size> array;
     size_t index{};
 };
@@ -61,7 +61,7 @@ private:
 
 constexpr size_t CHUNK_SIZE = 0x2000;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     try {
         if (argc <= 1)
             throw std::runtime_error(std::string(argv[0]) + " <input_file> [<output_file>]");
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
             output_chunk.insert(output_chunk.end(), output_chunk_data.begin(), output_chunk_data.end());
 
             // TODO: Or does it need to be done for every bit?
-            if (input_i % CHUNK_SIZE == 0) { // If we went over
+            if (input_i % CHUNK_SIZE == 0) {  // If we went over
                 flush_to_output();
             }
         }
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
 
         filesystem::file_write(output_path, output_data);
 
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error& e) {
         printf("Error: %s\n", e.what());
         return 1;
     }

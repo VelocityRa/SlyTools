@@ -1,19 +1,22 @@
-#include "types.hpp"
 #include "fs.hpp"
 #include "stream_utils.hpp"
+#include "types.hpp"
 #include "wac.hpp"
 
-#include <iterator>
-#include <fstream>
-#include <stdexcept>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <stdexcept>
 
-int main(int argc, char *argv[]) {
+using fs = std::filesystem;
+
+int main(int argc, char* argv[]) {
     try {
         if (argc <= 2)
-            throw std::runtime_error(std::string(argv[0]) + " <input_dir> [<output_file_wac> <output_file_wal>]");
+            throw std::runtime_error(std::string(argv[0]) +
+                                     " <input_dir> [<output_file_wac> <output_file_wal>]");
 
-        const std::filesystem::path input_dir_path = argv[1];
+        const fs::path input_dir_path = argv[1];
 
         const auto wac_path = (argc == 4) ? argv[2] : input_dir_path / "SLY.WAC";
         std::ofstream wac_ofs(wac_path, std::ios::binary | std::ios::trunc);
@@ -26,13 +29,13 @@ int main(int argc, char *argv[]) {
         u32 wac_entry_count{};
 
         // We'll write the entry count here later
-        stream_write(wac_ofs, (u32) 0);
+        stream_write(wac_ofs, (u32)0);
 
 #ifdef NDEBUG
         printf("Packing files");
 #endif
 
-        for (auto &p : std::filesystem::recursive_directory_iterator(input_dir_path)) {
+        for (auto& p : fs::recursive_directory_iterator(input_dir_path)) {
             if (!p.is_regular_file()) {
                 continue;
             }
@@ -47,7 +50,7 @@ int main(int argc, char *argv[]) {
 
             WACEntry wac_entry;
 
-            wac_entry.type = (WACType) name_str.back();
+            wac_entry.type = (WACType)name_str.back();
             wac_entry.name = name_str.substr(0, name_str.size() - 2);
             wac_entry.data = filesystem::file_read(full_path_str);
             wac_entry.size = wac_entry.data.size();
@@ -87,7 +90,7 @@ int main(int argc, char *argv[]) {
         wac_ofs.seekp(0);
         stream_write(wac_ofs, wac_entry_count);
 
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error& e) {
         printf("Error: %s\n", e.what());
         return 1;
     }
