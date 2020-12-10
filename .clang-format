@@ -1,0 +1,9 @@
+﻿---
+BasedOnStyle: Chromium
+Language: Cpp
+IndentWidth: 4
+AllowShortCaseLabelsOnASingleLine: true
+Cpp11BracedListStyle: false
+ColumnLimit: 105
+AllowAllConstructorInitializersOnNextLine: false
+...
