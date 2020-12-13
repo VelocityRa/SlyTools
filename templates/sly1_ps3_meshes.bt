@@ -76,9 +76,11 @@ string read_vec4(vec4 &v) {
     return s;
 }
 
-typedef struct align_t (int align_count) {
-    byte pad[(align_count - (FTell() & (align_count - 1))) % align_count];
-} align <hidden=true>;
+typedef struct align_t (int alignment) {
+    local int val = FTell();
+    local int pad_size = (-val) & (alignment - 1);
+    byte pad[pad_size];
+} align;
 
 
 // SZMS stuff
@@ -92,7 +94,7 @@ typedef struct szms_header_t (uint16 flags)
 } szms_header <read=read_szms_header, bgcolor=cYellow>;
 string read_szms_header(szms_header &v) {
     string s;
-    SPrintf(s, "flags: %04X size: 0x%X", g_flags, v.data_size);
+    SPrintf(s, "size: %05X", v.data_size);
     return s;
 }
 
@@ -105,8 +107,9 @@ typedef struct mesh_header_t
 } mesh_header <read=read_mesh_header, bgcolor=cBlue>;
 string read_mesh_header(mesh_header &v) {
     string s;
-    SPrintf(s, "mesh#: %d unk0: 0x%08X unk1: 0x%04X",
-        v.mesh_count, v.unknown_0x00, v.unknown_0x04);
+    //SPrintf(s, "mesh#: %d unk0: 0x%08X unk1: 0x%04X",
+    //    v.mesh_count, v.unknown_0x00, v.unknown_0x04);
+    SPrintf(s, "mesh#: %d", v.mesh_count);
     return s;
 }
 
@@ -206,72 +209,6 @@ string read_vertex_data(vertex_data &v) {
 
 // SZME stuff
 
-/*
-
-// first unk byte is count of unk?
-// last byte is count of something after?
-// byte 0xC is # of words after 4words
-
-typedef struct unk1_t_ {
-    float unk0 <bgcolor=cDkAqua>;
-    float unk1 <bgcolor=cDkAqua>;
-    float unk2 <bgcolor=cDkAqua>;
-} unk1_t <read=read_unk1>;
-string read_unk1(unk1_t &v) {
-    string s;
-    SPrintf(s, "%4.3f \t%4.3f \t%4.3f   \t%4.3f",
-        v.unk0, v.unk1, v.unk2,
-        v.unk0*v.unk0 + v.unk1*v.unk1 + v.unk2*v.unk2);
-    return s;
-}
-
-typedef struct szme_header_t {
-    char magic[4];
-    uint32 unk_0x04 <bgcolor=cAqua>;
-    
-    float unk_0x08 <bgcolor=cDkAqua>;
-    float unk_0x0C <bgcolor=cDkAqua>;
-    float unk_0x10 <bgcolor=cDkAqua>;
-    float unk_0x14 <bgcolor=cDkAqua>;
-    uint32 unk_0x18 <bgcolor=cAqua>;
-    uint32 unk_0x1C <bgcolor=cAqua>;
-    float unk_0x20 <bgcolor=cDkAqua>;
-    uint32 unk_0x24 <bgcolor=cAqua>;
-    uint32 unk_0x28 <bgcolor=cAqua>;
-    ubyte unk_0x2C[3] <bgcolor=cAqua>;
-    ubyte vertex_count;
-    ubyte unk_0x30[3] <bgcolor=cAqua>;
-    ubyte unk_count;
-} szme_header;
-
-// todo
-struct texcoord_t {
-    float u, v;
-};
-
-typedef struct szme_data_t
-{
-    szme_header szme_hdr;
-
-    szme_vertex vertices[szme_hdr.vertex_count];
-
-    //normal_t normal[szme_hdr.vertex_count / 3];
-    normal_t unk[10]<bgcolor=cGreen>;
-
-    // float unk_words[25];
-
-    //texcoord_t tecxcoord[szme_hdr.unk_count] <bgcolor=cGreen>;
-
-    // unk1_t unk1[szme_hdr.vertex_count];
-
-} szme_data <read=read_szme_data, bgcolor=cDkYellow>;
-string read_szme_data(szme_data &v) {
-    string s;
-    SPrintf(s, "");
-    return s;
-}
-*/
-
 local uint16 g_flags = 0;
 
 typedef struct szme_header2_t (uint16 flags) {
@@ -341,15 +278,16 @@ typedef struct szme_vertex_data_t {
     align _pad(4);
 
     vec3 positions[unk_count1];
-    vec3 normals[unk_count2];
-    uint32 unk_u32_1[unk_count3];
+    vec3 rotations[unk_count2];
+    uint32 unk_color[unk_count3];
     vec2 texcoords[unk_count4];
-    uint32 unk_u32_2[unk_count5];
+    uint32 lighting[unk_count5];
 
-    uint16 unk_u16;
+    uint16 texture_id;
+
     byte unk_u8_1;
     byte unk_u8_2;
-} szme_vertex_data;
+} szme_vertex_data <optimize=false>;
 
 typedef struct mesh_data_t
 {
@@ -376,7 +314,7 @@ typedef struct mesh_data_t
 
         if ((flags & 0x100) == 0) { // TODO: remove when we parse 0x100 case
             if ((flags & 1) == 0) {
-                if (szme_hdr.mesh_count < 12) { // todo
+                if (szme_hdr.mesh_count < 0xFF) { // todo
                     szme_vertex_data szme_data[szme_hdr.mesh_count];
                 }
             }
@@ -384,11 +322,20 @@ typedef struct mesh_data_t
     } else {
         // TODO
     }
-    
-} mesh_data <read=read_mesh_data, open=true, bgcolor=cDkGray>;
+
+} mesh_data <read=read_mesh_data, bgcolor=cDkGray, optimize=false>;
 string read_mesh_data(mesh_data &v) {
     string s;
-    SPrintf(s, "");
+
+    SPrintf(s, "flags: %02X", v.flags);
+
+    if ((v.flags & 1) == 0) {
+        SPrintf(s, "%s %s", s, read_szms_header(v.szms));
+        SPrintf(s, "%s %s", s, read_mesh_header(v.mesh_hdr));
+    } else {
+    }
+
+    //SPrintf(s, "%s", s);
     return s;
 }
 
