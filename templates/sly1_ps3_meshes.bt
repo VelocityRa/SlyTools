@@ -261,7 +261,7 @@ typedef struct szme_header2_t (uint16 flags) {
 string read_szme_header2(szme_header2 &v) {
     string s;
     if ((g_flags & 1) == 0) {
-        SPrintf(s, "mesh_count: %d", v.mesh_count);
+        SPrintf(s, "szme#: %d", v.mesh_count);
     }
     return s;
 }
@@ -332,7 +332,9 @@ string read_mesh_data(mesh_data &v) {
     if ((v.flags & 1) == 0) {
         SPrintf(s, "%s %s", s, read_szms_header(v.szms));
         SPrintf(s, "%s %s", s, read_mesh_header(v.mesh_hdr));
+        SPrintf(s, "%s %s", s, read_szme_header2(v.szme_hdr));
     } else {
+        // TDDO
     }
 
     //SPrintf(s, "%s", s);
