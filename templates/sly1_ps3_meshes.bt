@@ -43,6 +43,17 @@ void hexdump(int64 pos, int n) {
 
 // Common types
 
+typedef struct bvec4_t
+{
+    uchar x, y, z, w;
+} bvec4 <read=read_bvec4, bgcolor=cDkPurple>;
+string read_bvec4(bvec4 &v) {
+    string s;
+    SPrintf(s, "[%02X %02X %02X %02X]",
+        v.x, v.y, v.z, v.w);
+    return s;
+}
+
 typedef struct vec2_t
 {
     float x, y;
@@ -129,13 +140,13 @@ typedef struct vertex_t
     float pos_x, pos_y, pos_z;
     normal_t normal;
     float texcoord_u, texcoord_v;
-    uint32 unk_0x20 <bgcolor=cAqua>;
+    uint32 color;
 } vertex <read=read_vertex, bgcolor=cDkPurple>;
 string read_vertex(vertex &v) {
     string s;
     SPrintf(s, "[%7.2f \t%7.2f \t%7.2f] [%4.3f \t%4.3f \t%4.3f] [%4.3f \t%4.3f] \t0x%08X",
         v.pos_x, v.pos_y, v.pos_z, v.normal.nx, v.normal.ny, v.normal.nz,
-        v.texcoord_u,  v.texcoord_v, v.unk_0x20);
+        v.texcoord_u,  v.texcoord_v, v.color);
     return s;
 }
 
@@ -253,9 +264,7 @@ typedef struct szme_header2_t (uint16 flags) {
         byte unk_0x1B <bgcolor=cAqua>;
         byte unk_0x1C <bgcolor=cAqua>;
     
-        if ((flags & 1) == 0) {
-            uint16 mesh_count;
-        }
+        uint16 mesh_count;
     }
 } szme_header2;
 string read_szme_header2(szme_header2 &v) {
@@ -267,7 +276,7 @@ string read_szme_header2(szme_header2 &v) {
 }
 
 typedef struct szme_vertex_data_t {
-    vec3 unk_vec;
+    vec3 origin;
     float unk_float;
     ubyte unk_count1;
     ubyte unk_count2;
@@ -281,7 +290,7 @@ typedef struct szme_vertex_data_t {
     vec3 rotations[unk_count2];
     uint32 unk_color[unk_count3];
     vec2 texcoords[unk_count4];
-    uint32 lighting[unk_count5];
+    bvec4 lighting[unk_count5];
 
     uint16 texture_id;
 
@@ -313,10 +322,8 @@ typedef struct mesh_data_t
         szme_header2 szme_hdr(flags);
 
         if ((flags & 0x100) == 0) { // TODO: remove when we parse 0x100 case
-            if ((flags & 1) == 0) {
-                if (szme_hdr.mesh_count < 0xFF) { // todo
-                    szme_vertex_data szme_data[szme_hdr.mesh_count];
-                }
+            if (szme_hdr.mesh_count < 0xFF) { // todo
+                szme_vertex_data szme_data[szme_hdr.mesh_count];
             }
         }
     } else {
