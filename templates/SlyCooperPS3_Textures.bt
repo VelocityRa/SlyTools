@@ -107,8 +107,8 @@ typedef struct TEXTURE_TABLE2_t {
 
   struct TEXTURE_RECORD2 {
     hexdump(FTell(), 21);
-    short flags <bgcolor=cBlue>; // not sure
-    short id <bgcolor=cBlue>;    // not sure
+    short flags <bgcolor=cBlue>;    // not sure
+    short unk_id <bgcolor=cBlue>;   // not sure
     uint32 unk_color0 <bgcolor=cBlue>;
     uint32 unk_color1 <bgcolor=cBlue>;
 
@@ -172,11 +172,11 @@ string TEXTURE_RECORD2_Read(TEXTURE_RECORD2 &v) {
     if (v.unk_flag != 0) {
         //SPrintf(s, "id: %04X flags: %04X f0: %f f1: %f",
         //    v.id, v.flags, v.unk_f0, v.unk_f1);
-        SPrintf(s, "id: %04X flags: %04X",
-            v.id, v.flags);
+        SPrintf(s, "id?: %04X flags: %04X",
+            v.unk_id, v.flags);
     } else {
-        SPrintf(s, "id: %04X flags: %04X",
-            v.id, v.flags);
+        SPrintf(s, "id?: %04X flags: %04X",
+            v.unk_id, v.flags);
     }
     return s;
 }
@@ -188,8 +188,8 @@ string UNK_TABLE_Read(UNK_TABLE &v) {
     return s;
 }
 
-//FSeek(0x4AFC); // uw_exterior_approach
-FSeek(0x55E4); // jb_intro
+FSeek(0x4AFC); // uw_exterior_approach
+//FSeek(0x55E4); // jb_intro
 //FSeek(0x2465); // splash
 
 CLUT_META_TABLE clut_meta_table;
