@@ -21,6 +21,10 @@
 LittleEndian();
 DisplayFormatHex();
 
+local int parse_meshes = false;
+local int parse_entities_experimental = false;
+local int sly_version = 1;
+
 //
 // Utility functions
 //
@@ -124,29 +128,18 @@ string read_mesh_header(mesh_header &v) {
     return s;
 }
 
-typedef struct normal_t_ {
-    float nx, ny, nz;
-} normal_t <read=read_normal>;
-string read_normal(normal_t &v) {
-    string s;
-    SPrintf(s, "%4.3f \t%4.3f \t%4.3f   \t%4.3f",
-        v.nx, v.ny, v.nz,
-        v.nx*v.nx+ v.ny*v.ny+ v.nz*v.nz);
-    return s;
-}
-
 typedef struct vertex_t
 {
-    float pos_x, pos_y, pos_z;
-    normal_t normal;
-    float texcoord_u, texcoord_v;
+    vec3 pos;
+    vec3 normal;
+    vec2 texcoord;
     uint32 color;
 } vertex <read=read_vertex, bgcolor=cDkPurple>;
 string read_vertex(vertex &v) {
     string s;
     SPrintf(s, "[%7.2f \t%7.2f \t%7.2f] [%4.3f \t%4.3f \t%4.3f] [%4.3f \t%4.3f] \t0x%08X",
-        v.pos_x, v.pos_y, v.pos_z, v.normal.nx, v.normal.ny, v.normal.nz,
-        v.texcoord_u,  v.texcoord_v, v.color);
+        v.pos.x, v.pos.y, v.pos.z, v.normal.x, v.normal.y, v.normal.z,
+        v.texcoord.x,  v.texcoord.y, v.color);
     return s;
 }
 
@@ -222,8 +215,55 @@ string read_vertex_data(vertex_data &v) {
 
 local uint16 g_flags = 0;
 
+typedef struct szme_vertex_data_t {
+    vec3 origin;
+    float unk_float;
+    ubyte unk_count1;
+    ubyte unk_count2;
+    ubyte unk_count3;
+    ubyte unk_count4;
+    ubyte unk_count5;
+
+    align _pad(4);
+
+    vec3 positions[unk_count1];
+    vec3 rotations[unk_count2];
+    uint32 unk_color[unk_count3];
+    vec2 texcoords[unk_count4];
+    bvec4 lighting[unk_count5];
+
+    uint16 texture_id;
+
+    byte unk_u8_1;
+    ubyte unk_count6;
+
+    ubyte unk_bytes[unk_count6]; // gets converted to floats
+    float unk_floats[unk_count6 * unk_count1];
+
+    // TODO: field_0x40
+} szme_vertex_data <optimize=false>;
+
+typedef struct after_szme_data_t {
+
+    ubyte unk_count;
+    vec3 unk_vec[unk_count];
+
+    ubyte unk_count2;
+    uint32 unk_u32[unk_count2];
+
+    ubyte unk_count3;
+    ubyte unk_u8[unk_count3];
+} after_szme_data <bgcolor=cAqua>;
+
+typedef struct meta_entry_alt_t {
+    uint16 type_maybe;
+
+    if (type_maybe != 0) {
+        ubyte unk[0x1C];
+    }
+} meta_entry_alt <bgcolor=cAqua>;
+
 typedef struct szme_header2_t (uint16 flags) {
-    char magic[4];
     if ((flags & 2) != 0) {
         uint32 unk_0x04 <bgcolor=cAqua>;
     }
@@ -245,8 +285,8 @@ typedef struct szme_header2_t (uint16 flags) {
     if ((flags & 0x40) != 0) {
         // meta entry alt
         //Assert(false);
-        Printf("flags & 0x40 unsupported, skipping\n");
-        FSeek(FTell() + 0x1C);
+        Printf("flags & 0x40 (meta_entry_alt) at 0x%X\n", FTell());
+        meta_entry_alt meta_entry_alt_;
     }
     if ((flags & 0x80) != 0) {
         vec3 unk_vec3;
@@ -254,8 +294,8 @@ typedef struct szme_header2_t (uint16 flags) {
     }
     if ((flags & 0x100) != 0) {
         // TODO
-        //Assert(false);
         Printf("flags & 0x100 unsupported, skipping everything\n");
+        Assert(false);
     } else {
         vec3 position;
         float unk_0x14 <bgcolor=cAqua>;
@@ -264,7 +304,15 @@ typedef struct szme_header2_t (uint16 flags) {
         byte unk_0x1B <bgcolor=cAqua>;
         byte unk_0x1C <bgcolor=cAqua>;
     
-        uint16 mesh_count;
+        if ((flags & 1) == 0) {
+            uint16 mesh_count;
+            //align _align(4);
+
+            szme_vertex_data szme_data[szme_hdr.mesh_count];
+
+            uint16 unk_count;
+            after_szme_data after_szme_data_[unk_count];
+        }
     }
 } szme_header2;
 string read_szme_header2(szme_header2 &v) {
@@ -275,34 +323,16 @@ string read_szme_header2(szme_header2 &v) {
     return s;
 }
 
-typedef struct szme_vertex_data_t {
-    vec3 origin;
-    float unk_float;
-    ubyte unk_count1;
-    ubyte unk_count2;
-    ubyte unk_count3;
-    ubyte unk_count4;
-    ubyte unk_count5;
-
-    align _pad(4);
-
-    vec3 positions[unk_count1];
-    vec3 rotations[unk_count2];
-    uint32 unk_color[unk_count3];
-    vec2 texcoords[unk_count4];
-    bvec4 lighting[unk_count5];
-
-    uint16 texture_id;
-
-    byte unk_u8_1;
-    byte unk_u8_2;
-} szme_vertex_data <optimize=false>;
-
 typedef struct mesh_data_t
 {
+    // only on primary SZMS
+    //ubyte unk_count; // not always right
+    //uint16 unk_u16;
     uint16 flags;
-
     g_flags = flags;
+
+    if (sly_version == 2)
+        uint16 unk;
 
     if ((flags & 1) == 0) {
         szms_header szms (flags);
@@ -318,17 +348,30 @@ typedef struct mesh_data_t
     
             vertex_data vertex_data_(start_offset);
         }
-
-        szme_header2 szme_hdr(flags);
-
-        if ((flags & 0x100) == 0) { // TODO: remove when we parse 0x100 case
-            if (szme_hdr.mesh_count < 0xFF) { // todo
-                szme_vertex_data szme_data[szme_hdr.mesh_count];
-            }
-        }
+    
+        char magic[4];
     } else {
         // TODO
+        uint16 unk_u16;
+        // align?
+        vec3 unk_mat4_0;
+        vec3 unk_mat4_1;
+        vec3 unk_mat4_2;
+        vec3 unk_mat4_3;
     }
+
+    szme_header2 szme_hdr(flags);
+
+    //if ((flags & 0x100) == 0) { // TODO: remove when we parse 0x100 case
+        //if (szme_hdr.mesh_count < 0xFF) { // todo
+            //szme_vertex_data szme_data[szme_hdr.mesh_count];
+
+            //uint16 unk_count;
+            //after_szme_data after_szme_data_[unk_count];
+        //}
+    //} else {
+    //    Assert(true, "0x100 case");
+    //}
 
 } mesh_data <read=read_mesh_data, bgcolor=cDkGray, optimize=false>;
 string read_mesh_data(mesh_data &v) {
@@ -352,6 +395,8 @@ string read_mesh_data(mesh_data &v) {
 // Object allocation
 //
 
+if (parse_meshes) {
+
 local TFindResults szms_res = FindAll("SZMS");
 
 local int i;
@@ -359,10 +404,14 @@ local int j;
 local int m_start;
 
 for (i = 0; i < szms_res.count; i++ ) {
-    m_start = szms_res.start[i] - 2;
+    if (sly_version == 2)
+        m_start = szms_res.start[i] - 4;
+    else
+        m_start = szms_res.start[i] - 4;
 
     FSeek(m_start);
     mesh_data mesh;
+
 
 /*
     Printf("SZMS #%04d %05X at %08X | mesh hdr unk: %08X %04X | vert hdr unk: ",
@@ -414,4 +463,154 @@ for (i = 0; i < szms_res.count; i++ ) {
 
     Printf("\n");
 */
+
 }
+
+}
+
+// 
+
+struct szms_container (int count) {
+    mesh_data mesh[count];
+    ubyte todo;
+};
+
+local int64 szms_next;
+
+while (true) {
+    szms_next = FindFirst("SZMS", true, false, 0, 0.0, 1, FTell());
+    if (szms_next == -1)
+        break;
+
+    Printf("[0x%X] SZMS container\n", szms_next - 4);
+
+    FSeek(szms_next - 4);
+
+    uint16 szms_count <bgcolor=cRed>;
+    szms_container cont (szms_count);  
+}
+
+/*
+local int is_fist_szms = true;
+local int cur_szmz_count = 0;
+
+local TFindResults szms_res = FindAll("SZMS");
+
+local int i;
+local int j;
+local int m_start;
+
+//FSeek(szms_res.start[0] - 4);
+FSeek(0x40f605);
+uint16 szms_count <bgcolor=cRed>;
+szms_container cont (szms_count);
+*/
+
+/*
+FSeek(szms_res.start[0] - 4);
+
+for (i = 0; i < szms_res.count; i++ ) {
+    if (cur_szmz_count == 0) {
+        uint16 szmz_count <bgcolor=cRed>;
+        cur_szmz_count = szmz_count;
+    }
+
+
+    m_start = szms_res.start[i] - 2;
+
+    FSeek(m_start);
+    mesh_data mesh;
+
+    cur_szmz_count -= 1;
+}
+*/
+
+//
+
+typedef struct light_t {
+    // todo mat3
+    vec3 mat0_0;
+    vec3 mat0_1;
+    vec3 mat0_2;
+
+    vec3 position <bgcolor=cDkRed>;
+    ubyte unkB0; // 3 bits
+    ubyte unkB1; // 3 bits
+    ubyte unkB2; // 3 bits
+    uint32 unkUint;
+
+    float unkF0;
+    float unkF1;
+
+    float unkF2;
+    float unkF3;
+    
+    //
+
+    uint16 unkUint2;
+    if (unkUint == 0x3B) {
+        hexdump(FTell(), 2);
+        ubyte unk1[3];
+    }
+
+
+    hexdump(FTell(), 79-2);
+    ubyte unk2[79-2];
+    Printf("\n");
+} light <optimize=false, bgcolor=cAqua>;
+
+typedef struct coinUnk_t {
+    uint16 u0;
+    if (u0 == (uint16)-1) {
+        uint16 u1;
+    } else {
+        uint16 u2;
+        uint16 u3;
+        // TODO ?
+
+        uint16 u4;
+    }
+} coinUnk <optimize=false, bgcolor=cDkAqua>;
+
+typedef struct coinUnk2_t {
+    uint16 u0;
+    uint16 u1;
+    uint32 u2;
+    ubyte u3;
+
+    if (u3 == 2)
+        float u4;
+
+    // TODO: unpacks_additonal_light_info?
+} coinUnk2 <optimize=false, bgcolor=cDkAqua>;
+
+typedef struct coin_t {
+    // todo mat3
+    vec3 mat0_0;
+    vec3 mat0_1;
+    vec3 mat0_2;
+
+    vec3 position <bgcolor=cDkRed>;
+
+    ubyte unkCount;
+    coinUnk cUnk[unkCount];
+
+    ubyte unkCount2;
+    coinUnk2 cUnk[unkCount2];
+
+    ubyte unk[0xA];
+} coin <optimize=false, bgcolor=cAqua>;
+
+if (parse_entities_experimental)  {
+
+FSeek(0x8D61C4);
+light u[20];
+
+FSeek(0x008D44D8);
+light u2;
+
+FSeek(0x0093B35E);
+coin c[47];
+
+}
+
