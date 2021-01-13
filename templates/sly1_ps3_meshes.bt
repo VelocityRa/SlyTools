@@ -475,19 +475,40 @@ struct szms_container (int count) {
     ubyte todo;
 };
 
-local int64 szms_next;
+struct szms_container_container {
+    ubyte unk_count;
+    uint32 unk_u32s[unk_count];
+    uint16 szms_count <bgcolor=cRed>;
+    szms_container cont (szms_count);
+};
+
+local int i = 0;
+local int64 szms_start;
+local int64 szms_start_real;
+local int64 szms_start_maybe;
 
 while (true) {
-    szms_next = FindFirst("SZMS", true, false, 0, 0.0, 1, FTell());
-    if (szms_next == -1)
+    szms_start = FindFirst("SZMS", true, false, 0, 0.0, 1, FTell());
+    if (szms_start == -1)
         break;
 
-    Printf("[0x%X] SZMS container\n", szms_next - 4);
+    szms_start_real = szms_start - 5;
+    for (i = 1; i < 15; i++) {
+        szms_start_maybe = szms_start - 4 - (i * 4 + 1);
 
-    FSeek(szms_next - 4);
+        if (ReadUByte(szms_start_maybe) == i) {
+            szms_start_real = szms_start_maybe;
+            Printf("[0x%X] found\n", szms_start_real);
+            break;
+        } else {
+            Printf("no\n");
+        }
+    }
 
-    uint16 szms_count <bgcolor=cRed>;
-    szms_container cont (szms_count);  
+    Printf("[0x%X] SZMS container\n", szms_start_real);
+
+    FSeek(szms_start_real);
+    szms_container_container szms;
 }
 
 /*
