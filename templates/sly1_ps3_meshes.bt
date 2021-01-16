@@ -2,7 +2,7 @@
 //--- 010 Editor v11.0 Binary Template
 //
 //      File: 
-//   Authors: revel8n, VelocityRa
+//   Authors: VelocityRa, revel8n
 //   Version:
 //   Purpose: 
 //  Category: 
@@ -11,8 +11,8 @@
 //   History: 
 //------------------------------------------------
 
-// TODO: SZME
-// TODO: Sanity-check that index_data is always sequential
+// TODO: index_data is not always sequential (?)
+
 
 //
 // Initialization
@@ -24,6 +24,7 @@ DisplayFormatHex();
 local int parse_meshes = false;
 local int parse_entities_experimental = false;
 local int sly_version = 1;
+
 
 //
 // Utility functions
@@ -40,6 +41,7 @@ void hexdump(int64 pos, int n) {
             Printf(" ");
     }
 }
+
 
 //
 // Type definitions (and Read functions)
@@ -94,8 +96,9 @@ string read_vec4(vec4 &v) {
 typedef struct align_t (int alignment) {
     local int val = FTell();
     local int pad_size = (-val) & (alignment - 1);
-    byte pad[pad_size];
-} align;
+    if (pad_size != 0)
+        byte pad[pad_size];
+} align <optimize=false>;
 
 
 // SZMS stuff
@@ -103,10 +106,11 @@ typedef struct align_t (int alignment) {
 typedef struct szms_header_t (uint16 flags)
 {
     char magic[4] <hidden=true>;
+    Assert(magic[0] == 'S' && magic[1] == 'Z' && magic[2] == 'M' && magic[3] == 'S');
     uint32 version <hidden=true>;
     Assert(version == 4);
     uint32 data_size;
-} szms_header <read=read_szms_header, bgcolor=cYellow>;
+} szms_header <read=read_szms_header, bgcolor=cYellow, optimize=false>;
 string read_szms_header(szms_header &v) {
     string s;
     SPrintf(s, "size: %05X", v.data_size);
@@ -119,7 +123,7 @@ typedef struct mesh_header_t
     uint16 unknown_0x04 <bgcolor=cAqua>;
     uint16 mesh_count <format=decimal>;
     uint32 mesh_offsets[mesh_count];
-} mesh_header <read=read_mesh_header, bgcolor=cBlue>;
+} mesh_header <read=read_mesh_header, bgcolor=cBlue, optimize=false>;
 string read_mesh_header(mesh_header &v) {
     string s;
     //SPrintf(s, "mesh#: %d unk0: 0x%08X unk1: 0x%04X",
@@ -134,7 +138,7 @@ typedef struct vertex_t
     vec3 normal;
     vec2 texcoord;
     uint32 color;
-} vertex <read=read_vertex, bgcolor=cDkPurple>;
+} vertex <read=read_vertex, bgcolor=cDkPurple, optimize=false>;
 string read_vertex(vertex &v) {
     string s;
     SPrintf(s, "[%7.2f \t%7.2f \t%7.2f] [%4.3f \t%4.3f \t%4.3f] [%4.3f \t%4.3f] \t0x%08X",
@@ -156,7 +160,7 @@ typedef struct vertex_header_t
     // Sanity-check that all verts are of the size we assume
     local uint32 vertex_single_size = vertex_data_size / vertex_count;
     Assert(vertex_single_size == sizeof(vertex_t));
-} vertex_header <read=read_vertex_header, bgcolor=cPurple>;
+} vertex_header <read=read_vertex_header, bgcolor=cPurple, optimize=false>;
 string read_vertex_header(vertex_header &v) {
     string s;
     SPrintf(s, "vtx#: %d unk#: %d vtx_off: 0x%X idx_off: 0x%X vtx_data_size: 0x%X",
@@ -187,7 +191,7 @@ typedef struct index_data_t(int64 start_offset)
 
     FSeek(start_offset + index_hdr.index_data_offset_1);
     uint16  index_data[index_hdr.index_count];
-} index_data <read=read_index_data, bgcolor=cDkGreen>;
+} index_data <read=read_index_data, bgcolor=cDkGreen, optimize=false>;
 string read_index_data(index_data &v) {
     string s;
     SPrintf(s, "");
@@ -200,11 +204,10 @@ typedef struct vertex_data_t(int64 start_offset)
 
     FSeek(start_offset + vertex_hdr.vertex_data_offset);
     vertex vertices[vertex_hdr.vertex_count];
-    Assert(sizeof(vertices) == vertex_hdr.vertex_data_size);
 
     FSeek(start_offset + vertex_hdr.index_header_offset);
     index_data index_hdr(start_offset);
-} vertex_data <read=read_vertex_data, bgcolor=cDkAqua>;
+} vertex_data <read=read_vertex_data, bgcolor=cDkAqua, optimize=false>;
 string read_vertex_data(vertex_data &v) {
     string s;
     SPrintf(s, "");
@@ -215,14 +218,74 @@ string read_vertex_data(vertex_data &v) {
 
 local uint16 g_flags = 0;
 
-typedef struct szme_vertex_data_t {
+typedef struct after_szme_data_nested_t (ubyte field_0x40, ubyte unk_count_parent){
+    ubyte unk_count;
+    vec3 unk_vec[unk_count];
+    
+    // TODO ubyte ?
+    uint16 unk[unk_count_parent*field_0x40];
+} after_szme_data_nested <optimize=false>;
+
+typedef struct after_szme_data_t (ubyte field_0x40) {
+    ubyte unk_count_;
+    vec3 unk_vec[unk_count_];
+
+    ubyte unk_count2;
+    uint32 unk_u32[unk_count2];
+
+    ubyte unk_count3_;
+    ubyte unk_u8[unk_count3_];
+
+    float unk_float[(uint32)unk_count_ * unk_count3_];
+
+    if (field_0x40 != 0)
+        after_szme_data_nested_t nested (field_0x40, unk_count_);
+} after_szme_data <bgcolor=cAqua, optimize=false>;
+
+typedef struct field_0x40_data_nested_t (ubyte field_0x40, ubyte indices_count) {
+    uint16 unk[indices_count];
+
+    // TODO: corret logic for these. depends on mesh index?
+    //uint16 unk2[field_0x40 * 2]; // these are 2 interleaved arrays
+} field_0x40_data_nested <optimize=false>;
+
+typedef struct field_0x40_data_t (ubyte field_0x40, ubyte indices_count) {
+    uint16 pos_count;
+    vec3 positions[pos_count];
+
+    uint16 norm_count;
+    vec3 normals[norm_count];
+
+    uint16 triangle_list[indices_count];
+
+    local int nested_count = field_0x40 * 2 - 1;
+    if (field_0x40 == 1)
+        nested_count = 1;
+/*
+    else if (field_0x40 == 8)
+        nested_count = 15;
+    else if (field_0x40 == 4)
+        nested_count = 7;
+*/
+/*
+    if (field_0x40 == 1)
+        nested_count = 1;
+    else
+        nested_count = field_0x40 * 2 - 1;
+*/
+    
+
+    field_0x40_data_nested nested (field_0x40, indices_count) [nested_count];
+} field_0x40_data <bgcolor=cGreen, optimize=false>;
+
+typedef struct szme_vertex_data_t (ubyte field_0x40) {
     vec3 origin;
     float unk_float;
     ubyte unk_count1;
     ubyte unk_count2;
     ubyte unk_count3;
     ubyte unk_count4;
-    ubyte unk_count5;
+    ubyte indices_count;
 
     align _pad(4);
 
@@ -230,30 +293,22 @@ typedef struct szme_vertex_data_t {
     vec3 rotations[unk_count2];
     uint32 unk_color[unk_count3];
     vec2 texcoords[unk_count4];
-    bvec4 lighting[unk_count5];
+    bvec4 indices[indices_count];
 
     uint16 texture_id;
 
     byte unk_u8_1;
     ubyte unk_count6;
 
-    ubyte unk_bytes[unk_count6]; // gets converted to floats
+    ubyte unk_bytes[unk_count6];
     float unk_floats[unk_count6 * unk_count1];
+
+    if (field_0x40 != 0) {
+        field_0x40_data f_0x40 (field_0x40, indices_count);
+    }
 
     // TODO: field_0x40
 } szme_vertex_data <optimize=false>;
-
-typedef struct after_szme_data_t {
-
-    ubyte unk_count;
-    vec3 unk_vec[unk_count];
-
-    ubyte unk_count2;
-    uint32 unk_u32[unk_count2];
-
-    ubyte unk_count3;
-    ubyte unk_u8[unk_count3];
-} after_szme_data <bgcolor=cAqua>;
 
 typedef struct meta_entry_alt_t {
     uint16 type_maybe;
@@ -261,9 +316,9 @@ typedef struct meta_entry_alt_t {
     if (type_maybe != 0) {
         ubyte unk[0x1C];
     }
-} meta_entry_alt <bgcolor=cAqua>;
+} meta_entry_alt <bgcolor=cAqua, optimize=false>;
 
-typedef struct szme_header2_t (uint16 flags) {
+typedef struct szme_t (uint16 flags, ubyte field_0x40) {
     if ((flags & 2) != 0) {
         uint32 unk_0x04 <bgcolor=cAqua>;
     }
@@ -308,14 +363,14 @@ typedef struct szme_header2_t (uint16 flags) {
             uint16 mesh_count;
             //align _align(4);
 
-            szme_vertex_data szme_data[szme_hdr.mesh_count];
-
-            uint16 unk_count;
-            after_szme_data after_szme_data_[unk_count];
+            szme_vertex_data szme_data (field_0x40) [szme.mesh_count];
+            uint16 after_szme_data_count;
+            // TODO
+            after_szme_data after_szme_data_ (field_0x40) [after_szme_data_count];
         }
     }
-} szme_header2;
-string read_szme_header2(szme_header2 &v) {
+} szme_t_t <optimize=false>;
+string read_szme_t(szme_t &v) {
     string s;
     if ((g_flags & 1) == 0) {
         SPrintf(s, "szme#: %d", v.mesh_count);
@@ -323,11 +378,8 @@ string read_szme_header2(szme_header2 &v) {
     return s;
 }
 
-typedef struct mesh_data_t
+typedef struct mesh_data_t (ubyte field_0x40)
 {
-    // only on primary SZMS
-    //ubyte unk_count; // not always right
-    //uint16 unk_u16;
     uint16 flags;
     g_flags = flags;
 
@@ -349,7 +401,8 @@ typedef struct mesh_data_t
             vertex_data vertex_data_(start_offset);
         }
     
-        char magic[4];
+        char magic[4] <hidden=true>;
+        Assert(magic[0] == 'S' && magic[1] == 'Z' && magic[2] == 'M' && magic[3] == 'E');
     } else {
         // TODO
         uint16 unk_u16;
@@ -360,11 +413,11 @@ typedef struct mesh_data_t
         vec3 unk_mat4_3;
     }
 
-    szme_header2 szme_hdr(flags);
+    szme_t szme(flags, field_0x40);
 
     //if ((flags & 0x100) == 0) { // TODO: remove when we parse 0x100 case
-        //if (szme_hdr.mesh_count < 0xFF) { // todo
-            //szme_vertex_data szme_data[szme_hdr.mesh_count];
+        //if (szme.mesh_count < 0xFF) { // todo
+            //szme_vertex_data szme_data[szme.mesh_count];
 
             //uint16 unk_count;
             //after_szme_data after_szme_data_[unk_count];
@@ -382,7 +435,7 @@ string read_mesh_data(mesh_data &v) {
     if ((v.flags & 1) == 0) {
         SPrintf(s, "%s %s", s, read_szms_header(v.szms));
         SPrintf(s, "%s %s", s, read_mesh_header(v.mesh_hdr));
-        SPrintf(s, "%s %s", s, read_szme_header2(v.szme_hdr));
+        SPrintf(s, "%s %s", s, read_szme_t(v.szme));
     } else {
         // TDDO
     }
@@ -390,6 +443,63 @@ string read_mesh_data(mesh_data &v) {
     //SPrintf(s, "%s", s);
     return s;
 }
+
+typedef struct szms_container_t {
+    ubyte field_0x40;
+    if (field_0x40 != 0)
+        uint32 unk_u32s[field_0x40];
+    uint16 szms_count <bgcolor=cRed>;
+    mesh_data mesh (field_0x40) [szms_count];
+
+    uint32 flags2;
+    if (flags2 & 1) {
+        vec3 unk_mat_0;
+        vec3 unk_mat_1;
+        vec3 unk_mat_2;
+    }
+    if (flags2 & 2) {
+        vec3 unk_mat2_0;
+        vec3 unk_mat2_1;
+        vec3 unk_mat2_2;
+    }
+    if (flags2 & 0xC) {
+        uint16 unk_u16;
+    }
+    if (flags2 & 0x10) {
+        uint16 unk_u16_2;
+    }
+    if (flags2 & 0x20) {
+        uint16 unk_u16_2;
+        vec3 unk_vec;
+        vec3 unk_vec2;
+        float unk_float;
+    }
+    if (flags2 & 0x40) {
+        uint16 unk_u16_3;
+        uint16 unk_u16_4;
+    }
+    if (flags2 & 0x80) {
+        ubyte unk_u8;
+    }
+
+    ubyte unk_count;
+    if (unk_count != 0)
+        Assert(false);
+    struct unk_t {
+        uint16 unk_u16;
+        float unk_float[field_0x40];
+    } unk_struct[unk_count];
+
+    uint16 unk_count2;
+    if (unk_count2 != 0)
+        ; // Assert(false);
+} szms_container <bgcolor=cDkGreen, read=read_szms_container, optimize=false>;
+string read_szms_container(szms_container &v) {
+    string s;
+    SPrintf(s, "count: %d    f40: 0x%02X", v.szms_count, v.field_0x40);
+    return s;
+}
+
 
 //
 // Object allocation
@@ -430,30 +540,30 @@ for (i = 0; i < szms_res.count; i++ ) {
 /*
     Printf("SZME #%04d at %08X | %08X %9.2f %9.2f %9.2f %9.2f %08X %08X %7.2f %08X %08X %02X%02X%02X %02X%02X%02X %02X ",
         i, m_start,
-        mesh.szme_data_.szme_hdr.unk_0x04,
+        mesh.szme_data_.szme.unk_0x04,
 
-        mesh.szme_data_.szme_hdr.unk_0x08,
-        mesh.szme_data_.szme_hdr.unk_0x0C,
-        mesh.szme_data_.szme_hdr.unk_0x10,
-        mesh.szme_data_.szme_hdr.unk_0x14,
+        mesh.szme_data_.szme.unk_0x08,
+        mesh.szme_data_.szme.unk_0x0C,
+        mesh.szme_data_.szme.unk_0x10,
+        mesh.szme_data_.szme.unk_0x14,
 
-        mesh.szme_data_.szme_hdr.unk_0x18,
-        mesh.szme_data_.szme_hdr.unk_0x1C,
+        mesh.szme_data_.szme.unk_0x18,
+        mesh.szme_data_.szme.unk_0x1C,
 
-        mesh.szme_data_.szme_hdr.unk_0x20,
+        mesh.szme_data_.szme.unk_0x20,
 
-        mesh.szme_data_.szme_hdr.unk_0x24,
-        mesh.szme_data_.szme_hdr.unk_0x28,
+        mesh.szme_data_.szme.unk_0x24,
+        mesh.szme_data_.szme.unk_0x28,
 
-        mesh.szme_data_.szme_hdr.unk_0x2C[0],
-        mesh.szme_data_.szme_hdr.unk_0x2C[1],
-        mesh.szme_data_.szme_hdr.unk_0x2C[2],
+        mesh.szme_data_.szme.unk_0x2C[0],
+        mesh.szme_data_.szme.unk_0x2C[1],
+        mesh.szme_data_.szme.unk_0x2C[2],
 
-        mesh.szme_data_.szme_hdr.unk_0x30[0],
-        mesh.szme_data_.szme_hdr.unk_0x30[1],
-        mesh.szme_data_.szme_hdr.unk_0x30[2],
+        mesh.szme_data_.szme.unk_0x30[0],
+        mesh.szme_data_.szme.unk_0x30[1],
+        mesh.szme_data_.szme.unk_0x30[2],
 
-        mesh.szme_data_.szme_hdr.unk_count);
+        mesh.szme_data_.szme.unk_count);
 
     for (j = 0; j < mesh.mesh_hdr.mesh_count; j++) {
         Printf("[%08X %04X] ",
@@ -470,45 +580,105 @@ for (i = 0; i < szms_res.count; i++ ) {
 
 // 
 
-struct szms_container (int count) {
-    mesh_data mesh[count];
-    ubyte todo;
-};
+int get_field0x40(int idx) {
+    switch (idx) {
+        case 83: return 1;
+        case 159: return 8;
+        case 185: return 4;
+        case 213: return 2;
+        case 296: return 10;
+        //case 185: return 4;
+        //case 213: return 5;
+        /*
+        case 137: return 1;
+        case 228: return 8;
+        case 324: return 4;
+        case 324: return 4;
+        */
+        default: return 0;
+    }
+}
 
-struct szms_container_container {
-    ubyte unk_count;
-    uint32 unk_u32s[unk_count];
-    uint16 szms_count <bgcolor=cRed>;
-    szms_container cont (szms_count);
-};
+local int new_new_way = 1;
+
+if (new_new_way) {
 
 local int i = 0;
 local int64 szms_start;
 local int64 szms_start_real;
 local int64 szms_start_maybe;
 
+local int found_count = 0;
+
 while (true) {
     szms_start = FindFirst("SZMS", true, false, 0, 0.0, 1, FTell());
     if (szms_start == -1)
         break;
 
+    szms_start_real = szms_start - 4 - (4 * get_field0x40(i) + 1);
+
+    Printf("[0x%X] SZMS container\n", szms_start_real);
+
+    FSeek(szms_start_real);
+    szms_container szms_container_;
+
+    i += 1;
+}
+
+/*
+local int szms_starts[2] = { 1, 2 };
+local int szms_start;
+local int i;
+
+for (int i = 0; i < sizeof(szms_starts); i++) {
+    szms_start = szms_starts[i];
+
+    FSeek(szms_start);
+    
+}
+*/
+
+}
+
+local int new_way = 0;
+
+if (new_way) {
+
+local int i = 0;
+local int64 szms_start;
+local int64 szms_start_real;
+local int64 szms_start_maybe;
+
+local int found_count = 0;
+
+while (true) {
+    szms_start = FindFirst("SZMS", true, false, 0, 0.0, 1, FTell());
+    if (szms_start == -1)
+        break;
+
+    found_count = 0;
+
+    // there's an array here so we need to do a heuristic to find it backwards
     szms_start_real = szms_start - 5;
-    for (i = 1; i < 15; i++) {
+    for (i = 0; i < 15; i++) {
         szms_start_maybe = szms_start - 4 - (i * 4 + 1);
 
         if (ReadUByte(szms_start_maybe) == i) {
             szms_start_real = szms_start_maybe;
-            Printf("[0x%X] found\n", szms_start_real);
-            break;
-        } else {
-            Printf("no\n");
+            Printf("[0x%X] found, i: %d\n", szms_start_real, i);
+            //break;
+            found_count += 1;
+            if (found_count > 1)
+                Assert(false);
         }
     }
 
     Printf("[0x%X] SZMS container\n", szms_start_real);
 
     FSeek(szms_start_real);
-    szms_container_container szms;
+    szms_container szms_container_;
+}
+
 }
 
 /*
@@ -547,6 +717,8 @@ for (i = 0; i < szms_res.count; i++ ) {
 */
 
 //
+
+if (parse_entities_experimental)  {
 
 typedef struct light_t {
     // todo mat3
@@ -621,8 +793,6 @@ typedef struct coin_t {
 
     ubyte unk[0xA];
 } coin <optimize=false, bgcolor=cAqua>;
-
-if (parse_entities_experimental)  {
 
 FSeek(0x8D61C4);
 light u[20];
