@@ -483,8 +483,8 @@ typedef struct szms_container_t {
     }
 
     ubyte unk_count;
-    if (unk_count != 0)
-        Assert(false);
+    //if (unk_count != 0)
+    //    Assert(false);
     struct unk_t {
         uint16 unk_u16;
         float unk_float[field_0x40];
@@ -587,14 +587,7 @@ int get_field0x40(int idx) {
         case 185: return 4;
         case 213: return 2;
         case 296: return 10;
-        //case 185: return 4;
-        //case 213: return 5;
-        /*
-        case 137: return 1;
-        case 228: return 8;
-        case 324: return 4;
-        case 324: return 4;
-        */
+        case 300: return 5;
         default: return 0;
     }
 }
