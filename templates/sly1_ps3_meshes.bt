@@ -218,7 +218,7 @@ string read_vertex_data(vertex_data &v) {
 
 local uint16 g_flags = 0;
 
-typedef struct after_szme_data_nested_t (ubyte field_0x40, ubyte unk_count_parent){
+typedef struct after_szme_data_nested_t (ubyte field_0x40, ubyte unk_count_parent) {
     ubyte unk_count;
     vec3 unk_vec[unk_count];
     
@@ -259,8 +259,6 @@ typedef struct field_0x40_data_t (ubyte field_0x40, ubyte indices_count) {
     uint16 triangle_list[indices_count];
 
     local int nested_count = field_0x40 * 2 - 1;
-    if (field_0x40 == 1)
-        nested_count = 1;
 /*
     else if (field_0x40 == 8)
         nested_count = 15;
@@ -318,7 +316,7 @@ typedef struct meta_entry_alt_t {
     }
 } meta_entry_alt <bgcolor=cAqua, optimize=false>;
 
-typedef struct szme_t (uint16 flags, ubyte field_0x40) {
+typedef struct szme_t_ (uint16 flags, ubyte field_0x40) {
     if ((flags & 2) != 0) {
         uint32 unk_0x04 <bgcolor=cAqua>;
     }
@@ -369,7 +367,7 @@ typedef struct szme_t (uint16 flags, ubyte field_0x40) {
             after_szme_data after_szme_data_ (field_0x40) [after_szme_data_count];
         }
     }
-} szme_t_t <optimize=false>;
+} szme_t <optimize=false, bgcolor=cLtGreen>;
 string read_szme_t(szme_t &v) {
     string s;
     if ((g_flags & 1) == 0) {
@@ -407,10 +405,10 @@ typedef struct mesh_data_t (ubyte field_0x40)
         // TODO
         uint16 unk_u16;
         // align?
-        vec3 unk_mat4_0;
-        vec3 unk_mat4_1;
-        vec3 unk_mat4_2;
-        vec3 unk_mat4_3;
+        vec3 instance_mat_0;
+        vec3 instance_mat_1;
+        vec3 instance_mat_2;
+        vec3 instance_mat_3;
     }
 
     szme_t szme(flags, field_0x40);
@@ -587,6 +585,7 @@ int get_field0x40(int idx) {
         case 185: return 4;
         case 213: return 2;
         case 296: return 10;
+        case 299: return 4;
         case 300: return 5;
         default: return 0;
     }
