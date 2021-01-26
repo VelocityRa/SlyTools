@@ -576,7 +576,83 @@ for (i = 0; i < szms_res.count; i++ ) {
 
 }
 
-// 
+
+
+
+/*
+    for (j = 0; j < 0xB; j++) {
+        if ((ReadUShort(szms_start - 4 - 4 - j * 4) != 0) ||
+            (ReadUByte (szms_start - 4 - 4 - j * 4 + 2) != 0)) {
+            if (ReadUByte(szms_start - 4 - 4 - j * 4 + 3) == j) {
+                field_0x40 = j;
+            }
+            else if (ReadUByte(szms_start - 4 - 4 - j * 4 + 3 + 4) == j - 1) {
+                field_0x40 = j - 1;
+            }
+            Printf("[0x%X] ye\n", szms_start - 4 - 4 - j * 4);
+            break;
+        } else {
+            Printf("[0x%X] no\n", szms_start - 4 - 4 - j * 4);
+        }
+    }
+*/
+
+local int word_0_check_heuristic = 1;
+
+if (word_0_check_heuristic) {
+
+local int i = 0;
+local int j = 0;
+local int64 szms_start;
+local int64 szms_start_real;
+local int64 szms_start_maybe;
+local int64 field_0x40;
+
+local int found = 0;
+
+local int found_count = 0;
+
+while (true) {
+    szms_start = FindFirst("SZMS", true, false, 0, 0.0, 1, FTell());
+    if (szms_start == -1)
+        break;
+
+    field_0x40 = 0;
+
+    found = 0;
+    for (j = 0; j < 0xB; j++) {
+        if ((ReadUShort(szms_start - 4 - 6 - j * 4) == 0xFFFF) &&
+            ((ReadUByte (szms_start - 4 - 4 - j * 4) == 0x01) ||
+             (ReadUByte (szms_start - 4 - 4 - j * 4) == 0x00))) {
+            if (ReadUByte (szms_start - 4 - 1 - j * 4) == j) {
+                field_0x40 = j;
+                found = 1;
+            }
+            break;
+        }
+    }
+    if (found == 0) {
+        Printf("[0x%X] not found!\n", szms_start);
+    }
+
+
+    szms_start_real = szms_start - 4 - (4 * field_0x40 + 1);
+
+    if (field_0x40 != 0)
+        Printf("[0x%X] SZMS container f40 0x%X\n", szms_start_real, field_0x40);
+
+    FSeek(szms_start_real);
+    szms_container szms_container_;
+
+    i += 1;
+}
+
+}
+
+
+
+
+local int new_new_way = 0;
 
 int get_field0x40(int idx) {
     switch (idx) {
@@ -590,8 +666,6 @@ int get_field0x40(int idx) {
         default: return 0;
     }
 }
-
-local int new_new_way = 1;
 
 if (new_new_way) {
 
@@ -631,6 +705,9 @@ for (int i = 0; i < sizeof(szms_starts); i++) {
 */
 
 }
+
+
+
 
 local int new_way = 0;
 
@@ -673,6 +750,10 @@ while (true) {
 
 }
 
+
+
+
+
 /*
 local int is_fist_szms = true;
 local int cur_szmz_count = 0;
@@ -708,7 +789,12 @@ for (i = 0; i < szms_res.count; i++ ) {
 }
 */
 
-//
+
+
+
+
+
+
 
 if (parse_entities_experimental)  {
 
