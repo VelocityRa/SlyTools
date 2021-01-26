@@ -316,6 +316,21 @@ typedef struct meta_entry_alt_t {
     }
 } meta_entry_alt <bgcolor=cAqua, optimize=false>;
 
+typedef struct flags_0x100_t_ {
+    uint16 unk_0x100_u16;
+    ubyte unk_0x100_u8;
+    if (unk_0x100_u8 != (ubyte)-1) {
+        float unk_0x100_float_arr[4];
+        vec3 unk_0x100_mat4_0;
+        vec3 unk_0x100_mat4_1;
+        vec3 unk_0x100_mat4_2;
+        vec3 unk_0x100_mat4_3;
+    }
+    ubyte unk_0x100_u8_2;
+    ubyte unk_0x100_u8_3;
+    ubyte unk_0x100_u8_4;
+} flags_0x100_t <bgcolor=cDkRed>;
+
 typedef struct szme_t_ (uint16 flags, ubyte field_0x40) {
     if ((flags & 2) != 0) {
         uint32 unk_0x04 <bgcolor=cAqua>;
@@ -346,26 +361,24 @@ typedef struct szme_t_ (uint16 flags, ubyte field_0x40) {
         vec4 unk_vec4;
     }
     if ((flags & 0x100) != 0) {
-        // TODO
-        Printf("flags & 0x100 unsupported, skipping everything\n");
-        Assert(false);
-    } else {
-        vec3 position;
-        float unk_0x14 <bgcolor=cAqua>;
-        uint16 unk_0x16_ignore <bgcolor=cAqua>;
-        byte unk_0x1A <bgcolor=cAqua>;
-        byte unk_0x1B <bgcolor=cAqua>;
-        byte unk_0x1C <bgcolor=cAqua>;
-    
-        if ((flags & 1) == 0) {
-            uint16 mesh_count;
-            //align _align(4);
+        flags_0x100_t flags_0x100;
+    }
 
-            szme_vertex_data szme_data (field_0x40) [szme.mesh_count];
-            uint16 after_szme_data_count;
-            // TODO
-            after_szme_data after_szme_data_ (field_0x40) [after_szme_data_count];
-        }
+    vec3 position;
+    float unk_0x14 <bgcolor=cAqua>;
+    uint16 unk_0x16_ignore <bgcolor=cAqua>;
+    byte unk_0x1A <bgcolor=cAqua>;
+    byte unk_0x1B <bgcolor=cAqua>;
+    byte unk_0x1C <bgcolor=cAqua>;
+
+    if ((flags & 1) == 0) {
+        uint16 mesh_count;
+        //align _align(4);
+
+        szme_vertex_data szme_data (field_0x40) [szme.mesh_count];
+        uint16 after_szme_data_count;
+        // TODO
+        after_szme_data after_szme_data_ (field_0x40) [after_szme_data_count];
     }
 } szme_t <optimize=false, bgcolor=cLtGreen>;
 string read_szme_t(szme_t &v) {
