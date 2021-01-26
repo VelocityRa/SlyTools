@@ -402,9 +402,8 @@ typedef struct mesh_data_t (ubyte field_0x40)
         char magic[4] <hidden=true>;
         Assert(magic[0] == 'S' && magic[1] == 'Z' && magic[2] == 'M' && magic[3] == 'E');
     } else {
-        // TODO
-        uint16 unk_u16;
-        // align?
+        uint16 instance_mesh_idx;
+
         vec3 instance_mat_0;
         vec3 instance_mat_1;
         vec3 instance_mat_2;
