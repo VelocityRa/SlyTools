@@ -625,7 +625,7 @@ local int found = 0;
 local int found_count = 0;
 
 while (true) {
-    szms_start = FindFirst("SZMS", true, false, 0, 0.0, 1, FTell());
+    szms_start = FindFirst("SZMS\x04\x00\x00\x00", true, false, 0, 0.0, 1, FTell());
     if (szms_start == -1)
         break;
 
