@@ -7,7 +7,7 @@
 #include <string_view>
 
 namespace filesystem {
-Buffer file_read(std::string_view filename) {
+    Buffer file_read(std::string_view filename, size_t read_size) {
     const auto& filename_str = std::string(filename);
 
     std::ifstream file(filename_str, std::ios::binary);
@@ -15,20 +15,26 @@ Buffer file_read(std::string_view filename) {
         throw std::runtime_error("Failed to open: " + filename_str);
 
     // Don't eat new lines in binary
-    // TODO: Needed?
     file.unsetf(std::ios::skipws);
 
-    // Get size
-    file.seekg(0, std::ios::end);
-    std::streampos fileSize = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    // Reserve capacity
     Buffer data;
-    data.reserve((u32)fileSize);
 
-    // Read data
-    data.insert(data.begin(), std::istream_iterator<u8>(file), std::istream_iterator<u8>());
+    const bool read_whole_file = (read_size == 0);
+    if (read_whole_file) {
+        // Get file size
+        file.seekg(0, std::ios::end);
+        read_size = file.tellg();
+        file.seekg(0, std::ios::beg);
+
+        data.reserve(read_size);
+
+        // Read file
+        data.insert(data.begin(), std::istream_iterator<u8>(file), std::istream_iterator<u8>());
+    } else {
+        data.resize(read_size);
+
+        file.read(reinterpret_cast<char*>(data.data()), read_size);
+    }
 
 #ifndef NDEBUG
     printf("Read %zu bytes\n", data.size());
