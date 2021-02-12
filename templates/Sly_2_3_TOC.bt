@@ -1,0 +1,78 @@
+//
+// Initialization
+//
+
+LittleEndian();
+DisplayFormatHex();
+
+//
+// Utility functions
+//
+
+void hexdump(int64 pos, int n) {
+    if (n == 0)
+        return;
+
+    local uchar buf[n];
+
+    ReadBytes(buf, pos, n);
+
+    local int i;
+    for (i = 0; i < n; ++i) {
+        Printf("%02X", buf[i]);
+        if (i % 4 == 3)
+            Printf(" ");
+    }
+}
+
+//
+// Type definitions (and Read functions)
+//
+
+// Common types
+
+typedef struct align_t (int alignment) {
+    local int val = FTell();
+    local int pad_size = (-val) & (alignment - 1);
+    if (pad_size != 0)
+        byte pad[pad_size];
+} align <optimize=false, hidden=true>;
+
+//
+
+local uint32 file_count = 0;
+local uint32 i = 0;
+local uint32 j = 0;
+
+typedef struct TOCFileEntry_t (string name, char type) {
+    uint32 offset;
+    uint32 size;
+
+    Printf("%c %s %X %X\n", type, name, offset, size);
+} TOCFileEntry <open=true>;
+
+typedef struct TOCEntry_t {
+    string name;
+
+    string types;
+
+    local uint32 types_count = sizeof(types) - 1;
+
+    if (FTell() & 0x3)
+        align _pad(4);
+
+    for (j = 0; j < types_count; j++)
+        TOCFileEntry file (name, types[j]);
+
+    file_count += types_count;
+} TOCEntry <optimize=false>;
+
+//
+// Object allocation
+//
+
+uint32 unk0;
+uint32 entry_count;
+TOCEntry entries[entry_count];
+
+Printf("\nEntries: %d\nFiles: %d\n", entry_count, file_count);
