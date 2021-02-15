@@ -1,0 +1,160 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+
+//
+// Initialization
+//
+
+LittleEndian();
+DisplayFormatHex();
+
+//
+// Utility functions
+//
+
+void hexdump(int64 pos, int n) {
+    local uchar buf[n];
+    ReadBytes(buf, pos, n);
+
+    local int i;
+    for (i = 0; i < n; ++i) {
+        Printf("%02X", buf[i]);
+        if (i % 4 == 3)
+            Printf(" ");
+    }
+}
+
+
+//
+// Type definitions (and Read functions)
+//
+
+// Common types
+
+typedef struct bvec4_t
+{
+    uchar x, y, z, w;
+} bvec4 <read=read_bvec4, bgcolor=cDkPurple>;
+string read_bvec4(bvec4 &v) {
+    string s;
+    SPrintf(s, "[%02X %02X %02X %02X]",
+        v.x, v.y, v.z, v.w);
+    return s;
+}
+
+typedef struct vec2_t
+{
+    float x, y;
+} vec2 <read=read_vec2, bgcolor=cDkPurple>;
+string read_vec2(vec2 &v) {
+    string s;
+    SPrintf(s, "[%7.3f \t%7.3f]",
+        v.x, v.y);
+    return s;
+}
+
+typedef struct vec3_t
+{
+    float x, y, z;
+} vec3 <read=read_vec3, bgcolor=cDkPurple>;
+string read_vec3(vec3 &v) {
+    string s;
+    SPrintf(s, "[%7.3f \t%7.3f \t%7.3f]",
+        v.x, v.y, v.z);
+    return s;
+}
+
+typedef struct vec4_t
+{
+    float x, y, z, w;
+} vec4 <read=read_vec4, bgcolor=cDkPurple>;
+string read_vec4(vec4 &v) {
+    string s;
+    SPrintf(s, "[%7.3f \t%7.3f \t%7.3f \t%7.3f]",
+        v.x, v.y, v.z, v.w);
+    return s;
+}
+
+typedef struct align_t (int alignment) {
+    local int val = FTell();
+    local int pad_size = (-val) & (alignment - 1);
+    if (pad_size != 0)
+        byte pad[pad_size];
+} align <optimize=false>;
+
+//
+//
+//
+
+typedef struct Object_t {
+    char fk_str[4];
+    char name[60];
+
+    //Printf("%40s ", name);
+    //hexdump(FTell(), 6*2);
+
+    uint32 unk_u32_0;
+    uint32 unk_u32_1;
+    uint32 unk_u32_2;
+    uint32 unk_u32_3;
+    uint32 count;
+
+    Printf("%X | %X | %08X | %08X | %02X | %s | %s\n",
+        unk_u32_0, unk_u32_1, unk_u32_2, unk_u32_3, count, fk_str, name);
+} Object <read=read_Object, optimize=false>;
+string read_Object(Object &v) {
+    string s;
+    SPrintf(s, "%X | %X | %08X | %08X | %02X | %s",
+        v.unk_u32_0, v.unk_u32_1, v.unk_u32_2, v.unk_u32_3, v.count, v.name);
+    return s;
+}
+
+typedef struct ObjectArray_t {
+    uint16 object_count;
+    Object obj[object_count];
+} ObjectArray <bgcolor=cDkPurple>;
+
+ObjectArray objects;
+
+typedef struct D_t {
+    uint16 id; // maybe
+    uint16 str_len;
+    char name[str_len];
+    // Printf("%s\n", read_D(this));
+} D <read=read_D, bgcolor=cDkGreen, optimize=false>;
+string read_D(D &v) {
+    local string s;
+    SPrintf(s, "0x%04X (%04d) | %s", v.id, v.id, v.name);
+    return s;
+}
+
+struct C {
+    uint16 count;
+    Printf("Entry count: %d\n", count);
+    D d[count];
+};
+C c;
+
+struct F {
+    ubyte unk[10];
+};
+
+struct G {
+    uint16 unk_f_count;
+    F f[unk_f_count] <bgcolor=cDkAqua>;
+}
+G g;
+
+typedef struct E_t {
+} E <bgcolor=cDkRed>;
