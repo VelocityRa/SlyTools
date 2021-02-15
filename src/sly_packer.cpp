@@ -8,15 +8,16 @@
 #include <iterator>
 #include <stdexcept>
 
-using fs = std::filesystem;
-
 int main(int argc, char* argv[]) {
     try {
         if (argc <= 2)
             throw std::runtime_error(std::string(argv[0]) +
                                      " <input_dir> [<output_file_wac> <output_file_wal>]");
 
-        const fs::path input_dir_path = argv[1];
+        const std::filesystem::path input_dir_path = argv[1];
+
+        if (argc == 3)
+            printf("Use either 1 or 3 arguments. Ignoring 2nd argument & extracting to working dir.\n");
 
         const auto wac_path = (argc == 4) ? argv[2] : input_dir_path / "SLY.WAC";
         std::ofstream wac_ofs(wac_path, std::ios::binary | std::ios::trunc);
@@ -31,22 +32,17 @@ int main(int argc, char* argv[]) {
         // We'll write the entry count here later
         stream_write(wac_ofs, (u32)0);
 
-#ifdef NDEBUG
-        printf("Packing files");
+#ifndef NDEBUG
+#else
+        printf("Packing files\n");
 #endif
 
-        for (auto& p : fs::recursive_directory_iterator(input_dir_path)) {
+        for (auto& p : std::filesystem::directory_iterator(input_dir_path)) {
             if (!p.is_regular_file()) {
                 continue;
             }
             const auto full_path_str = p.path().string();
             const auto name_str = p.path().filename().string();
-
-#ifndef NDEBUG
-            printf("Reading %s\n", name_str.c_str());
-#else
-            printf(".");
-#endif
 
             WACEntry wac_entry;
 
@@ -79,6 +75,12 @@ int main(int argc, char* argv[]) {
             padding1.resize(padding_len);
             stream_write_buf(wal_ofs, padding1);
             wal_size += padding_len;
+
+#ifndef NDEBUG
+            printf("Writing %s at offset 0x%X size 0x%X pad 0x%X\n", name_str.c_str(), wac_entry.offset, wac_entry.size, padding_len);
+#else
+            printf(".");
+#endif
 
             ++wac_entry_count;
         }
