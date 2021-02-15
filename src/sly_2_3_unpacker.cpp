@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
         if (argc < 2)
             throw std::runtime_error(std::string(argv[0]) + " <input_file> [<output_dir>]");
 
-        constexpr u32 MAX_TOC_SIZE = 0x40000
+        constexpr u32 MAX_TOC_SIZE = 0x40000;
 
         const std::string wal_path = argv[1];
         auto wal_buf = filesystem::file_read(wal_path, MAX_TOC_SIZE);
@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
         if (argc == 3)
             toc_path = argv[2];
         else
-            toc_path = wal_path + ".dec";
+            toc_path = wal_path + ".toc";
 
         // Decryption
         u64 lVar14 = 0x7a69;
@@ -32,6 +32,8 @@ int main(int argc, char* argv[]) {
         }
 
         filesystem::file_write(toc_path, wal_buf);
+
+        // TODO:
 
     } catch (const std::runtime_error& e) {
         printf("Error: %s\n", e.what());
