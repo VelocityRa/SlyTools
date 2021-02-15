@@ -21,10 +21,7 @@
 LittleEndian();
 DisplayFormatHex();
 
-local int parse_meshes = false;
 local int parse_entities_experimental = false;
-local int sly_version = 1;
-
 
 //
 // Utility functions
@@ -394,9 +391,6 @@ typedef struct mesh_data_t (ubyte field_0x40)
     uint16 flags;
     g_flags = flags;
 
-    if (sly_version == 2)
-        uint16 unk;
-
     if ((flags & 1) == 0) {
         szms_header szms (flags);
 
@@ -515,6 +509,7 @@ string read_szms_container(szms_container &v) {
 // Object allocation
 //
 
+local int parse_meshes = false; // old
 if (parse_meshes) {
 
 local TFindResults szms_res = FindAll("SZMS");
@@ -524,10 +519,7 @@ local int j;
 local int m_start;
 
 for (i = 0; i < szms_res.count; i++ ) {
-    if (sly_version == 2)
-        m_start = szms_res.start[i] - 4;
-    else
-        m_start = szms_res.start[i] - 4;
+    m_start = szms_res.start[i] - 4;
 
     FSeek(m_start);
     mesh_data mesh;
