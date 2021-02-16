@@ -3,26 +3,18 @@
 #include "wac.hpp"
 
 #include <algorithm>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
-#include <iterator>
 #include <iostream>
+#include <iterator>
 #include <stdexcept>
 
-constexpr bool DEBUG_MODE = true;
+constexpr bool DEBUG_MODE = false;
 
-// Set exceptions to be thrown on failure
-// Don't eat new lines in binary
-
-void set_exceptions(std::ifstream& f) {
-    f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    f.unsetf(std::ios::skipws);
-}
-
-void set_exceptions(std::ofstream& f) {
-    f.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-    f.unsetf(std::ios::skipws);
-}
+#ifdef _MSC_VER
+#define fopen64 fopen
+#endif
 
 int main(int argc, char* argv[]) {
     try {
@@ -32,8 +24,8 @@ int main(int argc, char* argv[]) {
         setvbuf(stdout, NULL, _IONBF, 0);
 
         const std::filesystem::path wac_path{ argv[1] };
-        std::string wal_path_string{ argv[1] };
-        wal_path_string.back() = 'L';
+        std::string wal_path_str{ argv[1] };
+        wal_path_str.back() = 'L';
 
         std::filesystem::path output_path;
         if (argc < 3)
@@ -42,68 +34,43 @@ int main(int argc, char* argv[]) {
             output_path = argv[2];
         std::filesystem::create_directory(output_path);
 
-        std::ifstream wac_ifs(wac_path, std::ios::binary | std::ios::in);
-        set_exceptions(wac_ifs);
+        const auto wac_fp = fopen64(wac_path.string().c_str(), "rb");
 
-        if (!wac_ifs.is_open())
+        if (wac_fp == NULL)
             throw std::runtime_error("Failed to open: " + wac_path.string());
-        wac_ifs.unsetf(std::ios::skipws);
 
-        const auto wac_entries = parse_wac(wac_ifs);
-        std::ifstream wal_ifs(wal_path_string, std::ios::binary | std::ios::in);
-        set_exceptions(wal_ifs);
-//        std::cout << " ifstream  file size: " << wal_ifs.tellg().seekpos() << std::endl;
+        const auto wac_entries = parse_wac(wac_fp);
+
+        const auto wal_fp = fopen64(wal_path_str.c_str(), "rb");
 
         Buffer file_data;
         for (const auto& entry : wac_entries) {
             const auto out_path = output_path / (entry.name + "_" + (char)entry.type);
 
             file_data.resize(entry.size);
-            printf("seekg\n");
-            wal_ifs.seekg(entry.offset * SECTOR_SIZE);
-            printf("tellg\n");
-            const size_t pos = wal_ifs.tellg();
-            if (pos != entry.offset * SECTOR_SIZE) {
-                printf("FUK file offset 0x%08llX\n", pos);
-            }
-            printf("read\n");
-            if (!wal_ifs.good())
-                throw std::runtime_error("bad wal_ifs!");
-            wal_ifs.read((char*)file_data.data(), entry.size);
+            _fseeki64(wal_fp, entry.offset * SECTOR_SIZE, SEEK_SET);
+            if (wal_fp == NULL)
+                throw std::runtime_error("wal_fp == NULL");
+            fread(file_data.data(), entry.size, 1, wal_fp);
 
-            printf("out_ofs\n");
-            std::ofstream out_ofs(out_path, std::ios::binary | std::ios::out | std::ios::trunc);
-            printf("set_exc\n");
-//            set_exceptions(out_ofs);
-            out_ofs.unsetf(std::ios::skipws);
-            printf("write\n");
-            out_ofs.write((const char*)file_data.data(), entry.size);
+            const auto out_fp = fopen64(out_path.string().c_str(), "wb");
+            if (out_fp == NULL)
+                throw std::runtime_error("out_fp == NULL");
 
-            bool found_non_0 = false;
-            for (auto b : file_data) {
-                if (b!=0){
-                    found_non_0 = true;
-                    break;
-                }
-            }
+            fwrite((const char*)file_data.data(), entry.size, 1, out_fp);
 
             if (DEBUG_MODE)
                 printf("Wrote %s offset 0x%08llX size 0x%08llX\n", out_path.string().c_str(),
                        entry.offset * SECTOR_SIZE, file_data.size());
 
-            if (!found_non_0)
-                printf("bruh that file was all zeros\n");
+            fclose(out_fp);
         }
 
-    } catch (std::ios_base::failure& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << strerror(errno) << std::endl;
-        std::cerr << e.code().message() << std::endl;
-    } catch (std::system_error& e) {
-        std::cerr << "Error: " << strerror(errno);
-        std::cerr << e.code().message() << std::endl;
+        fclose(wal_fp);
+        fclose(wac_fp);
     } catch (const std::runtime_error& e) {
-        printf("Error: %s\n", e.what());
+        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "errno: " << strerror(errno) << std::endl;
         return 1;
     }
 

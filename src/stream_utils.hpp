@@ -18,3 +18,8 @@ void stream_write(std::ostream& stream, const T& data) {
 void stream_write_buf(std::ostream& stream, const Buffer& data) {
     stream.write(reinterpret_cast<const char*>(data.data()), data.size());
 }
+
+template <typename T>
+void stream_read(FILE* fp, T& data) {
+    fread(&data, 1, sizeof(T), fp);
+}

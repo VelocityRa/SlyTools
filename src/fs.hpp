@@ -2,7 +2,6 @@
 
 #include "types.hpp"
 
-#include <filesystem>
 #include <string_view>
 
 namespace filesystem {
