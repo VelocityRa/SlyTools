@@ -8,6 +8,8 @@
 #include <iterator>
 #include <stdexcept>
 
+constexpr bool DEBUG_MODE = false;
+
 int main(int argc, char* argv[]) {
     try {
         if (argc <= 2)
@@ -32,10 +34,8 @@ int main(int argc, char* argv[]) {
         // We'll write the entry count here later
         stream_write(wac_ofs, (u32)0);
 
-#ifndef NDEBUG
-#else
-        printf("Packing files\n");
-#endif
+        if (!DEBUG_MODE)
+            printf("Packing files\n");
 
         for (auto& p : std::filesystem::directory_iterator(input_dir_path)) {
             if (!p.is_regular_file()) {
@@ -76,18 +76,16 @@ int main(int argc, char* argv[]) {
             stream_write_buf(wal_ofs, padding1);
             wal_size += padding_len;
 
-#ifndef NDEBUG
-            printf("Writing %s at offset 0x%X size 0x%X pad 0x%X\n", name_str.c_str(), wac_entry.offset, wac_entry.size, padding_len);
-#else
-            printf(".");
-#endif
+            if (DEBUG_MODE)
+                printf("Writing %s at offset 0x%X size 0x%X pad 0x%X\n", name_str.c_str(), wac_entry.offset, wac_entry.size, padding_len);
+            else
+                printf(".");
 
             ++wac_entry_count;
         }
 
-#ifdef NDEBUG
-        printf(" done.\n");
-#endif
+        if (!DEBUG_MODE)
+            printf(" done.\n");
 
         wac_ofs.seekp(0);
         stream_write(wac_ofs, wac_entry_count);
