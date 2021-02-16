@@ -59,6 +59,8 @@ static WACEntries parse_wac(std::istream& wac_data) {
         stream_read(wac_data, size);
         entry.size = size;
 
+        printf(" - %24s type %c offset 0x%08X (0x%016llX) size 0x%08X\n", name, (char)type, offset,  offset * SECTOR_SIZE, size);
+
         wac_entries.push_back(entry);
     }
 
