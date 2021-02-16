@@ -9,8 +9,7 @@ if (MINGW)
     link_libraries(stdc++fs)
 endif()
 
-add_library(fs_utils STATIC src/fs.cpp src/fs.cpp src/fs.hpp)
-
+add_library(fs_utils STATIC src/fs.cpp src/fs.hpp)
 link_libraries(fs_utils)
 
 add_executable(sly_decompressor src/sly_decompressor.cpp)
