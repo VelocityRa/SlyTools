@@ -10,8 +10,9 @@
 
 int main(int argc, const char** argv)
 {
-    if (argc == 0) {
-	std::cout << "Syntax: " << argv[0] << " " << "<input_file>";
+    if (argc < 2) {
+	std::cout << "Syntax: " << argv[0] << " " << "<input_file>" << "\n";
+        return -1;
     }
     std::streampos size;
     const char* filename = argv[1];
@@ -34,7 +35,7 @@ int main(int argc, const char** argv)
         return 1;
     }
 
-    char* output_data = new char[0x4000];
+    char output_data[0x4000];
     uint32_t actual_output_data_size = 10*size;
     char* actual_output_data = new char[actual_output_data_size];
 
