@@ -3,6 +3,10 @@
 #include <cstdint>
 #include <vector>
 
+#define KiB 1024
+#define MiB 1024*KiB
+#define GiB 1024*MiB
+
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
 using u32 = std::uint32_t;
