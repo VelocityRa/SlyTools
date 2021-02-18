@@ -78,7 +78,8 @@ int main(int argc, char* argv[]) {
             wal_size += padding_len;
 
             if (DEBUG_MODE)
-                printf("Writing %s at offset 0x%X size 0x%X pad 0x%X\n", name_str.c_str(), wac_entry.offset, wac_entry.size, padding_len);
+                printf("Writing %s at offset 0x%X size 0x%X pad 0x%X\n", name_str.c_str(),
+                       wac_entry.offset, wac_entry.size, padding_len);
             else
                 printf(".");
 

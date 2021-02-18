@@ -1,3 +1,4 @@
+#include "file_magic_utils.hpp"
 #include "fs.hpp"
 #include "types.hpp"
 #include "wac.hpp"
@@ -40,11 +41,12 @@ int main(int argc, char* argv[]) {
 
         Buffer file_data;
         for (const auto& entry : wac_entries) {
-            const auto out_path = output_path / (entry.name + ".sly" + (char)entry.type);
-
             file_data.resize(entry.size);
             _fseeki64(wal_fp, entry.offset * SECTOR_SIZE, SEEK_SET);
             fread(file_data.data(), entry.size, 1, wal_fp);
+
+            const auto extension = get_file_extension(file_data, (char)entry.type);
+            const auto out_path = output_path / (entry.name + extension);
 
             const auto out_fp = fopen64(out_path.string().c_str(), "wb");
             if (out_fp == NULL)

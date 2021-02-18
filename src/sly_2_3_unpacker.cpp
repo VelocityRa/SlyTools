@@ -1,3 +1,4 @@
+#include "file_magic_utils.hpp"
 #include "fs.hpp"
 #include "stream_utils.hpp"
 #include "types.hpp"
@@ -51,11 +52,12 @@ int main(int argc, char* argv[]) {
         Buffer file_data;
         for (const auto& entry : wal_toc.entries) {
             for (const auto& entry_file : entry.files) {
-                const auto out_path = output_path / (entry.name + ".sly" + (char)entry_file.type);
-
                 file_data.resize(entry_file.size);
                 _fseeki64(wal_fp, entry_file.offset * SECTOR_SIZE, SEEK_SET);
                 fread(file_data.data(), entry_file.size, 1, wal_fp);
+
+                const auto extension = get_file_extension(file_data, (char)entry_file.type);
+                const auto out_path = output_path / (entry.name + extension);
 
                 const auto out_fp = fopen64(out_path.string().c_str(), "wb");
                 if (out_fp == NULL)
