@@ -20,7 +20,7 @@ enum class WACType : char {
     Dialogue = 'D',
     SoundEffects = 'E',
     Music = 'M',
-    LevelData = 'W',
+    World = 'W',
 };
 
 struct WACEntry {

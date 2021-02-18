@@ -12,16 +12,10 @@
 
 constexpr bool DEBUG_MODE = false;
 
-#ifdef _MSC_VER
-#define fopen64 fopen
-#endif
-
 int main(int argc, char* argv[]) {
     try {
         if (argc < 2)
             throw std::runtime_error(std::string(argv[0]) + " <input_file> [<output_dir>]");
-
-        setvbuf(stdout, NULL, _IONBF, 0);
 
         const std::filesystem::path wac_path{ argv[1] };
         std::string wal_path_str{ argv[1] };
@@ -35,22 +29,21 @@ int main(int argc, char* argv[]) {
         std::filesystem::create_directory(output_path);
 
         const auto wac_fp = fopen64(wac_path.string().c_str(), "rb");
-
         if (wac_fp == NULL)
             throw std::runtime_error("Failed to open: " + wac_path.string());
 
         const auto wac_entries = parse_wac(wac_fp);
 
         const auto wal_fp = fopen64(wal_path_str.c_str(), "rb");
+        if (wal_fp == NULL)
+            throw std::runtime_error("wal_fp == NULL");
 
         Buffer file_data;
         for (const auto& entry : wac_entries) {
-            const auto out_path = output_path / (entry.name + "_" + (char)entry.type);
+            const auto out_path = output_path / (entry.name + ".sly" + (char)entry.type);
 
             file_data.resize(entry.size);
             _fseeki64(wal_fp, entry.offset * SECTOR_SIZE, SEEK_SET);
-            if (wal_fp == NULL)
-                throw std::runtime_error("wal_fp == NULL");
             fread(file_data.data(), entry.size, 1, wal_fp);
 
             const auto out_fp = fopen64(out_path.string().c_str(), "wb");
