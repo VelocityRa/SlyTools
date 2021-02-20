@@ -307,6 +307,13 @@ typedef struct u2_t (u8 flags) {
     j9 j9_;
 } u2 <optimize=false, bgcolor=cBlue>;
 
+u8 min(u8 x, u8 y) {
+    if (x < y)
+        return x;
+    else
+        return y;
+}
+
 typedef struct szme_data_t (u8 flags, u16 u2_cnt, u8 e2_cnt) {
     u8 a0_cnt;
 
@@ -324,16 +331,22 @@ typedef struct szme_data_t (u8 flags, u16 u2_cnt, u8 e2_cnt) {
     vec3 normals[vertex_count];
     uint32 a4[vertex_count];
 
-    if (e2_cnt != 0) {
-        Assert(false);
-    }
     u8 a5;
+
+    if (e2_cnt != 0) {
+        u8 a7[4];
+
+        local u8 e2_cnt_mn = min(e2_cnt, 4);
+        u8 a8[vertex_count * e2_cnt_mn];
+    }
+
     u8 indices_unk[a0_unk_cnt];
 
     if (a0_unk_cnt != 0) // TODO: ???
         u32 a6;
 
-    u2 u2_ (flags) [u2_cnt];
+    if (u2_cnt > 0)
+        u2 u2_ (flags) [u2_cnt];
 } szme_data <optimize=false, bgcolor=cYellow>;
 
 typedef struct e17_t {
