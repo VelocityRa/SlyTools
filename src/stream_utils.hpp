@@ -41,13 +41,13 @@ class BufferStream {
 };
 
 template <typename T>
-void stream_read(std::istream& stream, T& data) {
-    stream.read(reinterpret_cast<char*>(&data), sizeof(T));
+void stream_read(std::istream& stream, T& data, size_t read_size = sizeof(T)) {
+    stream.read(reinterpret_cast<char*>(&data), read_size);
 }
 
 template <typename T>
-void stream_write(std::ostream& stream, const T& data) {
-    stream.write(reinterpret_cast<const char*>(&data), sizeof(T));
+void stream_write(std::ostream& stream, const T& data, size_t write_size = sizeof(T)) {
+    stream.write(reinterpret_cast<const char*>(&data), write_size);
 }
 
 void stream_write_buf(std::ostream& stream, const Buffer& data) {
@@ -55,6 +55,6 @@ void stream_write_buf(std::ostream& stream, const Buffer& data) {
 }
 
 template <typename T>
-void stream_read(FILE* fp, T& data) {
-    fread(&data, 1, sizeof(T), fp);
+void stream_read(FILE* fp, T& data, size_t read_size = sizeof(T)) {
+    fread(&data, 1, read_size, fp);
 }

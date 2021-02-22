@@ -45,8 +45,8 @@ static WACEntries parse_wac(T& wac_data) {
     for (unsigned i = 0; i < entry_count; ++i) {
         WACEntry entry;
 
-        char name[WAC_ENTRY_NAME_LEN]{};
-        stream_read(wac_data, name);
+        char name[WAC_ENTRY_NAME_LEN + 1]{};
+        stream_read(wac_data, name, WAC_ENTRY_NAME_LEN);
         entry.name.resize(std::strlen(name));
         std::copy(name, name + entry.name.size(), entry.name.begin());
 
@@ -63,7 +63,8 @@ static WACEntries parse_wac(T& wac_data) {
         entry.size = size;
 
         if (DEBUG_MODE_)
-            printf(" - %24s type %c offset 0x%08X (0x%016llX) size 0x%08X\n", name, (char)type, offset,  offset * SECTOR_SIZE, size);
+            printf(" - %24s type %c offset 0x%08X (0x%016llX) size 0x%08X\n", name, (char)type, offset,
+                   offset * SECTOR_SIZE, size);
 
         wac_entries.push_back(entry);
     }
