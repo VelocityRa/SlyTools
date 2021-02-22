@@ -37,13 +37,17 @@ typedef ubyte u8;
 typedef uint16 u16;
 typedef uint32 u32;
 typedef uint64 u64;
+typedef byte s8;
+typedef int16 s16;
+typedef int32 s32;
+typedef int64 s64;
 typedef float f32;
 typedef double f64;
 
 typedef struct bvec4_t
 {
     uchar x, y, z, w;
-} bvec4 <read=read_bvec4, bgcolor=cDkPurple>;
+} bvec4 <read=read_bvec4, bgcolor=cLtBlue>;
 string read_bvec4(bvec4 &v) {
     string s;
     SPrintf(s, "[%02X %02X %02X %02X]",
@@ -54,7 +58,7 @@ string read_bvec4(bvec4 &v) {
 typedef struct vec2_t
 {
     float x, y;
-} vec2 <read=read_vec2, bgcolor=cDkPurple>;
+} vec2 <read=read_vec2, bgcolor=cPurple>;
 string read_vec2(vec2 &v) {
     string s;
     SPrintf(s, "[%7.3f \t%7.3f]",
@@ -76,7 +80,7 @@ string read_vec3(vec3 &v) {
 typedef struct uvec3_t
 {
     uint32 x, y, z;
-} uvec3 <read=read_uvec3, bgcolor=cDkPurple>;
+} uvec3 <read=read_uvec3, bgcolor=cDkBlue>;
 string read_uvec3(uvec3 &v) {
     string s;
     SPrintf(s, "[%d %d %d]",
@@ -98,7 +102,7 @@ string read_vec4(vec4 &v) {
 typedef struct svec2_t
 {
     uint16 x, y;
-} svec2 <read=read_svec2, bgcolor=cDkPurple>;
+} svec2 <read=read_svec2, bgcolor=cDkBlue>;
 string read_svec2(svec2 &v) {
     string s;
     SPrintf(s, "[%d %d %d]", v.x, v.y);
@@ -150,7 +154,7 @@ typedef struct vertex_t
     vec3 normal;
     vec2 texcoord;
     uint32 color;
-} vertex <read=read_vertex, bgcolor=cDkPurple, optimize=false>;
+} vertex <read=read_vertex, bgcolor=cLtPurple, optimize=false>;
 string read_vertex(vertex &v) {
     string s;
     SPrintf(s, "[%7.2f \t%7.2f \t%7.2f] [%4.3f \t%4.3f \t%4.3f] [%4.3f \t%4.3f] \t0x%08X",
@@ -172,7 +176,7 @@ typedef struct vertex_header_t
     // Sanity-check that all verts are of the size we assume
     local uint32 vertex_single_size = vertex_data_size / vertex_count;
     Assert(vertex_single_size == sizeof(vertex_t));
-} vertex_header <read=read_vertex_header, bgcolor=cPurple, optimize=false>;
+} vertex_header <read=read_vertex_header, bgcolor=cLtYellow, optimize=false>;
 string read_vertex_header(vertex_header &v) {
     string s;
     SPrintf(s, "vtx#: %d unk#: %d vtx_off: 0x%X idx_off: 0x%X vtx_data_size: 0x%X",
@@ -236,40 +240,6 @@ string read_vertex_data(vertex_data &v) {
 }
 
 // SZME stuff
-
-/*
-typedef struct szme_vertex_data_t (ubyte field_0x40) {
-    vec3 origin;
-    float unk_float;
-    ubyte unk_count1;
-    ubyte unk_count2;
-    ubyte unk_count3;
-    ubyte unk_count4;
-    ubyte indices_count;
-
-    align _pad(4);
-
-    vec3 positions[unk_count1];
-    vec3 rotations[unk_count2];
-    uint32 unk_color[unk_count3];
-    vec2 texcoords[unk_count4];
-    bvec4 indices[indices_count];
-
-    uint16 texture_id;
-
-    byte unk_u8_1;
-    ubyte unk_count6;
-
-    ubyte unk_bytes[unk_count6];
-    float unk_floats[unk_count6 * unk_count1];
-
-    if (field_0x40 != 0) {
-        field_0x40_data f_0x40 (field_0x40, indices_count);
-    }
-
-    // TODO: field_0x40
-} szme_vertex_data <optimize=false>;
-*/
 
 typedef struct e2_t {
     u32 f0;
@@ -340,10 +310,13 @@ typedef struct szme_data_t (u8 flags, u16 u2_cnt, u8 e2_cnt) {
         u8 a8[vertex_count * e2_cnt_mn];
     }
 
-    u8 indices_unk[a0_unk_cnt];
+    if (a0_unk_cnt > 0)
+        u8 indices_unk[a0_unk_cnt];
 
-    if (a0_unk_cnt != 0) // TODO: ???
-        u32 a6;
+    local u32 uVar28 = a0_unk_cnt + 0x1f;
+    local u32 a6_uint_cnt = ((int)uVar28 >> 5) + (uint)((int)uVar28 < 0 && (uVar28 & 0x1f) != 0);
+    if (a6_uint_cnt > 0)
+        u32 a6[a6_uint_cnt];
 
     if (u2_cnt > 0)
         u2 u2_ (flags) [u2_cnt];
@@ -435,7 +408,7 @@ typedef struct mesh_data_t (ubyte i0)
         ubyte type;
         uint16 u2_cnt;
         uint16 u3;
-        ubyte u3;
+        ubyte u3_;
         uint32 u4;
         uint32 u5_ign;
         uint32 u6;
@@ -458,9 +431,12 @@ typedef struct mesh_data_t (ubyte i0)
             Assert(true, "type == 3"); // TODO
         }
     } else {
-        Assert(false); // TODO
+        u16 u1_alt[u0];
+        u32 u2_ign_cnt;
+        if (u2_ign_cnt > 0)
+            u8 u2_ign[u2_ign_cnt];
     }
-} mesh_data <read=read_mesh_data, bgcolor=cDkGray, optimize=false>;
+} mesh_data <read=read_mesh_data, bgcolor=cDkYellow, optimize=false>;
 string read_mesh_data(mesh_data &v) {
     string s;
 
@@ -488,7 +464,7 @@ typedef struct szms_container_t {
     ubyte i4;
 
     uint16 szms_count <bgcolor=cRed>;
-    mesh_data mesh (i0) [szms_count];
+    mesh_data mesh (i0) [szms_count - 1];
 } szms_container <bgcolor=cDkGreen, read=read_szms_container, optimize=false>;
 string read_szms_container(szms_container &v) {
     string s;
