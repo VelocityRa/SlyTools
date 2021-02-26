@@ -409,26 +409,28 @@ typedef struct mesh_data_t (ubyte i0)
         uint16 u2_cnt;
         uint16 u3;
         ubyte u3_;
-        uint32 u4;
-        uint32 u5_ign;
+        f32 u4;
+        f32 u5;
         uint32 u6;
         ubyte u7_ign;
         ubyte u8_;
 
         if (i0 == 0) {
             vec3 u9;
-            u32 u10_ign;
+            float u10;
             u32 u11;
-            u32 u12_ign;
+            float u12;
         }
         if (type == 0) {
              mesh_data_t0 t0 (u2_cnt);
         } else if (type == 1) {
-            Assert(true, "type == 1"); // TODO
+            Assert(false, "type == 1"); // TODO
         } else if (type == 2) {
-            Assert(true, "type == 2"); // TODO
+            Assert(false, "type == 2"); // TODO
         } else if (type == 3) {
-            Assert(true, "type == 3"); // TODO
+            Assert(false, "type == 3"); // TODO
+        } else {
+            Assert(false);
         }
     } else {
         u16 u1_alt[u0];
@@ -456,22 +458,209 @@ string read_mesh_data(mesh_data &v) {
     return s;
 }
 
-typedef struct szms_container_t {
+typedef struct mesh_data_unk3_t {
+    u16 count;
+    if (count > 0) {
+        u8 k1[count];
+        Assert(false);
+    }
+} mesh_data_unk3 <bgcolor=cGreen, optimize=false>;
+
+typedef struct mesh_container_t {
     ubyte i0;
     vec3 i1;
-    uint32 i2;
+    float i2;
     ubyte i3;
     ubyte i4;
 
-    uint16 szms_count <bgcolor=cRed>;
-    mesh_data mesh (i0) [szms_count - 1];
-} szms_container <bgcolor=cDkGreen, read=read_szms_container, optimize=false>;
-string read_szms_container(szms_container &v) {
+    uint16 mesh_count <bgcolor=cRed>;
+    mesh_data mesh (i0) [mesh_count - 1]; // TODO: why -1
+    mesh_data_unk3 mesh_data_unk3_;
+} mesh_container <bgcolor=cDkGreen, read=read_mesh_container, optimize=false>;
+string read_mesh_container(mesh_container &v) {
     string s;
-    SPrintf(s, "count: %d", v.szms_count);
+    SPrintf(s, "count: %d", v.mesh_count);
     return s;
 }
 
+
+typedef struct mesh_container_outer_c2_t {
+    u16 c3;
+    u16 c4;
+    u32 c5;
+    u8 flags;
+    if ((flags & 1) == 0) {
+        if ((flags & 2) != 0) {
+            f32 c6;
+            f32 c7;
+        }
+    } else {
+        f32 c8;
+    }
+    if ((flags & 4) != 0) {
+        u8 c9;
+    }
+    if ((flags & 8) != 0) {
+        u8 c10;
+        f32 c11;
+        vec3 c12_mat_0;
+        vec3 c12_mat_1;
+        vec3 c12_mat_2;
+        vec3 c12_mat_3;
+        u8 c13;
+        u8 c14;
+        u32 c15;
+    }
+    if ((flags & 0x10) != 0) {
+        u8 c16;
+        f32 c17;
+        f32 c18;
+    }
+    if ((flags & 0x20) != 0) {
+        vec3 c19;
+    }
+    if (c4 < 0x10) {
+        local u64 uVar8 = 1 << ((u64)(u32)c4 & 0x7F);
+        if ((uVar8 & 0xA001) == 0) {
+            if ((uVar8 & 0x4100) == 0) {
+                vec3 c22_mat_0;
+                vec3 c22_mat_1;
+                vec3 c22_mat_2;
+                vec3 c22_mat_3;
+            } else {
+                u16 c20;
+            }
+        } else {            
+            vec3 c21_mat_0;
+            vec3 c21_mat_1;
+            vec3 c21_mat_2;
+            vec3 c21_mat_3;
+        }
+    } else {        
+        vec3 c22_mat_0;
+        vec3 c22_mat_1;
+        vec3 c22_mat_2;
+        vec3 c22_mat_3;
+    }
+} mesh_container_outer_c2 <bgcolor=cDkRed, optimize=false>;
+
+typedef struct ca_t {
+    u16 ca0;
+    u16 ca1;
+    u16 ca2;
+    vec3 ca3;
+    u16 ca4;
+    vec3 ca5;
+} ca <bgcolor=cRed>;
+typedef struct cb_t {
+    u16 cb0;
+    u16 cb1;
+    u8 cb2;
+    u8 cb3;
+} cb <bgcolor=cDkRed>;
+typedef struct cc_t {
+    u8 cc0;
+    f32 cc1;
+    f32 cc2;
+    f32 cc3;
+    f32 cc4;
+    vec3 cc5;
+    vec3 cc6;
+    u8 cc7_cnt;
+    if (cc7_cnt > 0)
+        u16 cc7[cc7_cnt];
+} cc <bgcolor=cAqua>;
+
+typedef struct cd5_t {
+    u16 cd5_0;
+    u16 cd5_1;
+    u16 cd5_2;
+} cd5 <bgcolor=cDkBlue>;
+
+typedef struct cd_t {
+    u16 cd0;
+    u16 cd1_ign;
+    u16 cd2_ign;
+    f32 cd3_ign[4]; // ?
+    u8 cd4;
+    if (cd4 > 0)
+        cd5 cd5_[cd4];
+} cd <bgcolor=cDkYellow, optimize=false>;
+
+typedef struct c6a_t {
+    u16 c6a0_count;
+    if (c6a0_count > 0)
+        vec3 c6a0[c6a0_count];
+    u16 cd_count;
+    u16 c6a2;
+    if (cd_count > 0)
+        cd cd_[cd_count];
+} c6a <bgcolor=cBlue>;
+
+struct c7b {
+    u16 c7b0;
+    u32 c7b1;
+    u32 c7b2;
+};
+
+typedef struct c7a_t {
+    u32 c70;
+    u32 c71;
+    u32 c72;
+    c7b c7b_[c70];
+} c7a <bgcolor=cLtGreen>;
+
+typedef struct c6_t {
+    u16 c6_0;
+    u32 c6_1;
+    u8 c6_2;
+    u8 c6_3;
+    f32 c6_4;
+    c6a c6a_;
+    c7a c7a_;
+    u32 c8a;
+    u16 c9a;
+    u16 c10a;
+    u8 c11a;
+} c6 <optimize=false, bgcolor=cLtRed>;
+
+typedef struct mesh_container_outer_t {
+    u16 c2_cnt;
+    if (c2_cnt > 0)
+        mesh_container_outer_c2 mco_c2[c2_cnt];
+
+    u8 ca_count;
+    if (ca_count > 0)
+        ca ca_[ca_count];
+    u8 cb_count;
+    if (cb_count > 0)
+        cb cb_[cb_count];
+    u8 cc_count;
+    if (cc_count > 0)
+        cc cc_[cc_count];
+
+    u16 c3;
+    u16 c4;
+    u16 c5;
+
+    u32 c1;
+    mesh_container mc;
+
+    u16 c6_count;
+    if (c6_count > 0) {
+        c6 c6_[c6_count];
+        f32 c7;
+        vec3 c8_mat3_0;
+        vec3 c8_mat3_1;
+        vec3 c8_mat3_2;
+    }
+
+} mesh_container_outer <bgcolor=cGreen, read=read_mesh_container_outer, optimize=false>;
+string read_mesh_container_outer(mesh_container_outer &v) {
+    string s;
+    SPrintf(s, "%s", read_mesh_container(v.mc));
+    return s;
+}
 
 //
 // Object allocation
@@ -479,8 +668,11 @@ string read_szms_container(szms_container &v) {
 
 // todo: connect with obj names?
 
-FSeek(0x110828);
-szms_container szms_container_;
+//FSeek(0x110828);
+//mesh_container mc;
+
+FSeek(0x1106C3);
+mesh_container_outer mco;
 
 /*
 local int i = 0;
