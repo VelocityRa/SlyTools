@@ -42,6 +42,19 @@ void hexdump(int64 pos, int n) {
 
 // Common types
 
+typedef ubyte bool;
+
+typedef ubyte u8;
+typedef uint16 u16;
+typedef uint32 u32;
+typedef uint64 u64;
+typedef byte s8;
+typedef int16 s16;
+typedef int32 s32;
+typedef int64 s64;
+typedef float f32;
+typedef double f64;
+
 typedef struct bvec4_t
 {
     uchar x, y, z, w;
@@ -97,9 +110,18 @@ typedef struct align_t (int alignment) {
 //
 //
 
-typedef struct Object_t {
+typedef struct FkString_t {
     char fk_str[4];
-    char name[60];
+    char name[60];    
+} FkString <read=read_FkString, bgcolor=cLtRed>;
+string read_FkString(FkString& v) {
+    string s;
+    SPrintf(s, "%c | %s", v.fk_str[3], v.name);
+    return s;
+}
+
+typedef struct Object_t {
+    FkString name;
 
     //Printf("%40s ", name);
     //hexdump(FTell(), 6*2);
@@ -109,14 +131,11 @@ typedef struct Object_t {
     uint32 unk_u32_2;
     uint32 unk_u32_3;
     uint32 count;
-
-    Printf("%X | %X | %08X | %08X | %02X | %s | %s\n",
-        unk_u32_0, unk_u32_1, unk_u32_2, unk_u32_3, count, fk_str, name);
 } Object <read=read_Object, optimize=false>;
 string read_Object(Object &v) {
     string s;
     SPrintf(s, "%X | %X | %08X | %08X | %02X | %s",
-        v.unk_u32_0, v.unk_u32_1, v.unk_u32_2, v.unk_u32_3, v.count, v.name);
+        v.unk_u32_0, v.unk_u32_1, v.unk_u32_2, v.unk_u32_3, v.count, read_FkString(v.name));
     return s;
 }
 
@@ -141,20 +160,50 @@ string read_D(D &v) {
 
 struct C {
     uint16 count;
-    Printf("Entry count: %d\n", count);
     D d[count];
 };
 C c;
 
-struct F {
-    ubyte unk[10];
-};
+typedef struct F_t {
+    ushort unk[5] <open=true>;
+} F <read=read_F>;
+string read_F(F& v) {
+    string s;
+    SPrintf(s, "%04X %04X %04X %04X %04X",
+        v.unk[0], v.unk[1], v.unk[2], v.unk[3], v.unk[4]);
+    return s;
+}
 
 struct G {
     uint16 unk_f_count;
     F f[unk_f_count] <bgcolor=cDkAqua>;
-}
+};
 G g;
 
-typedef struct E_t {
-} E <bgcolor=cDkRed>;
+typedef struct World_t {
+    FkString name;
+
+    u8 world_id;
+    u8 level_id;
+    bool is_exterior;
+    u8 e3_cnt;
+    u16 e3[e3_cnt];
+} World <read=read_World, optimize=false, bgcolor=cDkRed>;
+string read_World(World& v) {
+    string s;
+    SPrintf(s, "%02X %02X %02X %02X | %c%c%c%c | %s",
+        v.world_id, v.level_id, v.is_exterior, v.e3_cnt, v.e3[0], v.e3[1], v.e3[2], v.e3[3],
+        read_FkString(v.name));
+    return s;
+}
+
+struct WorldArray {
+    u32 count;
+    u32 unk;
+
+    World w[count];
+};
+
+WorldArray worlds;
+
+FkString name_current;
