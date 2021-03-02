@@ -400,6 +400,8 @@ typedef struct mesh_data_t0_t (u16 u2_cnt) {
     szme_t szme (u2_cnt);
 } mesh_data_t0 <open=true, bgcolor=cDkRed>;
 
+local int skip_mco = false;
+
 typedef struct mesh_data_t (ubyte i0)
 {
     ubyte u0;
@@ -424,13 +426,23 @@ typedef struct mesh_data_t (ubyte i0)
         if (type == 0) {
              mesh_data_t0 t0 (u2_cnt);
         } else if (type == 1) {
-            Assert(false, "type == 1"); // TODO
+            //Assert(false, "type == 1"); // TODO
+            Printf("[%06X] TODO: type == 1\n", FTell());
+            skip_mco = true;
         } else if (type == 2) {
-            Assert(false, "type == 2"); // TODO
+            //Assert(false, "type == 2"); // TODO
+            Printf("[%06X] TODO: type == 2\n", FTell());
+            skip_mco = true;
         } else if (type == 3) {
-            Assert(false, "type == 3"); // TODO
+            //Assert(false, "type == 3"); // TODO
+            Printf("[%06X] TODO: type == 3\n", FTell());
+            skip_mco = true;
         } else {
             Assert(false);
+        }
+        if (skip_mco) {
+            Printf("skip_mco from type\n");
+            break;
         }
     } else {
         u16 u1_alt[u0];
@@ -441,20 +453,6 @@ typedef struct mesh_data_t (ubyte i0)
 } mesh_data <read=read_mesh_data, bgcolor=cDkYellow, optimize=false>;
 string read_mesh_data(mesh_data &v) {
     string s;
-
-/*
-    SPrintf(s, "flags: %02X", v.flags);
-
-    if ((v.flags & 1) == 0) {
-        SPrintf(s, "%s %s", s, read_szms_header(v.szms));
-        SPrintf(s, "%s %s", s, read_mesh_header(v.mesh_hdr));
-        SPrintf(s, "%s %s", s, read_szme_t(v.szme));
-    } else {
-        // TDDO
-    }
-*/
-
-    //SPrintf(s, "%s", s);
     return s;
 }
 
@@ -474,12 +472,32 @@ typedef struct mesh_container_t {
     ubyte i4;
 
     uint16 mesh_count <bgcolor=cRed>;
-    mesh_data mesh (i0) [mesh_count - 1]; // TODO: why -1
+    local int i = 0;
+    local int do_break = false;
+    while (i < mesh_count) {
+        mesh_data mesh (i0);
+        if (skip_mco) {
+            do_break = true;
+            break;
+        }
+        if (mesh.u0 == 0) {
+            //Printf("i [%d] += mesh.u2_cnt [%d]\n", i, mesh.u2_cnt);
+            i += mesh.u2_cnt;
+        } else {
+            //Printf("i++ [d] [%d]\n", i, i+1);
+            i--;
+        }
+        i++;
+    }
+    if (do_break) {
+        Printf("do_break from type\n");
+        break;
+    }
     mesh_data_unk3 mesh_data_unk3_;
 } mesh_container <bgcolor=cDkGreen, read=read_mesh_container, optimize=false>;
 string read_mesh_container(mesh_container &v) {
     string s;
-    SPrintf(s, "count: %d", v.mesh_count);
+    SPrintf(s, "mesh# %d", v.mesh_count);
     return s;
 }
 
@@ -624,6 +642,15 @@ typedef struct c6_t {
     u8 c11a;
 } c6 <optimize=false, bgcolor=cLtRed>;
 
+typedef struct c9_t {
+    s16 d1;
+    //Printf("d1 0x%X\n",d1);
+    if (d1 >= 0) {
+        local u16 uVar1 = (u64)(uint)((int)d1 << 3) + (u64)(uint)((int)d1 << 5);
+        //Printf("uVar1 0x%X\n",uVar1);
+    }
+} c9 <optimize=false, bgcolor=cLtBlue>;
+
 typedef struct mesh_container_outer_t {
     u16 c2_cnt;
     if (c2_cnt > 0)
@@ -645,6 +672,10 @@ typedef struct mesh_container_outer_t {
 
     u32 c1;
     mesh_container mc;
+    if (skip_mco) {
+        Printf("skipp\n");
+        break;
+    }
 
     u16 c6_count;
     if (c6_count > 0) {
@@ -655,10 +686,14 @@ typedef struct mesh_container_outer_t {
         vec3 c8_mat3_2;
     }
 
+    c9 c9_;
+
 } mesh_container_outer <bgcolor=cGreen, read=read_mesh_container_outer, optimize=false>;
 string read_mesh_container_outer(mesh_container_outer &v) {
     string s;
-    SPrintf(s, "%s", read_mesh_container(v.mc));
+    // TODO c6_count
+    SPrintf(s, "c2# %d abc# %d %d %d mc: %s", 
+        v.c2_cnt, v.ca_count, v.cb_count, v.cc_count, read_mesh_container(v.mc));
     return s;
 }
 
@@ -671,8 +706,15 @@ string read_mesh_container_outer(mesh_container_outer &v) {
 //FSeek(0x110828);
 //mesh_container mc;
 
-FSeek(0x1106C3);
-mesh_container_outer mco;
+local int mco_offsets[351] = { 0x107E63,0x1106C3,0x1197A3,0x1345D3,0x136E69,0x138E5F,0x13B405,0x13BDB5,0x13DC69,0x158A26,0x158F1E,0x159416,0x160B1C,0x160EEA,0x161429,0x1D1DD3,0x1EB302,0x1EBCA4,0x1EBF97,0x1F1D12,0x1F2730,0x20E520,0x23BEC2,0x246A91,0x246F7D,0x247967,0x25B2D3,0x25CC85,0x25D451,0x26E423,0x28EB5C,0x28EFE1,0x2A831E,0x2A8EEC,0x2EAC0E,0x2EB3BE,0x2ECCF3,0x2ED867,0x2FDF82,0x2FE59C,0x310313,0x3244A3,0x373733,0x382E88,0x3834B9,0x38739B,0x387C56,0x391598,0x3926C4,0x39EA73,0x3A38B3,0x3A7FB3,0x3A9A93,0x3B3463,0x3B4D47,0x42A57E,0x42AB38,0x42BC90,0x42C6AE,0x43C489,0x43E48A,0x449583,0x47ED0C,0x47FF84,0x490222,0x490DF0,0x4E2436,0x530783,0x5346C3,0x5C5703,0x5C8175,0x5CB0E3,0x5CD9A3,0x5CDA15,0x5CDAE4,0x5D6ED3,0x5D96F3,0x5E06A3,0x634593,0x6DB3B3,0x739813,0x7D5158,0x7D5618,0x804323,0x8043B3,0x806C62,0x806E5A,0x816E33,0x823AD3,0x8349B3,0x8746DA,0x874E9F,0x875400,0x8828D3,0x892BB2,0x89309E,0x894149,0x8A79BC,0x8A8181,0x8A8856,0x8B9D32,0x8C1FF6,0x924B73,0x98A8C1,0x9955A0,0x99943E,0x9A5C7E,0x9AAC13,0x9B406E,0x9B785B,0x9C1B68,0x9C5928,0x9CDB42,0x9D06D4,0x9DAAB5,0x9DE7D7,0x9E8627,0x9EBC0B,0x9F2230,0x9F4FB5,0x9FC1C4,0x9FF638,0xA022DD,0xA03265,0xA0FF5B,0xA14F0B,0xA16DFE,0xA17BBC,0xA1BC55,0xA1F5D3,0xA26FD3,0xA2CB93,0xA3C583,0xA4D2ED,0xA4E3F8,0xA50D13,0xA572E3,0xA59521,0xA59960,0xA5B796,0xA75FB3,0xA819F3,0xA81A67,0xC33F91,0xC357AF,0xC35BF6,0xC3654D,0xC368CA,0xCA459A,0xD5B310,0xD5B84C,0xD5C74C,0xD5D64C,0xDAE2B3,0xDD2C33,0xE0DF33,0xE322D9,0xE34C61,0xE6C193,0xE78633,0xE78708,0xE78C0C,0xE7EF75,0xE87493,0xEA5B5A,0xEE6D2F,0xEE7AC7,0xEE8319,0xEE9A3A,0xEEAA44,0xEEE1F3,0x1011177,0x1011376,0x1012BB3,0x1016D07,0x1017455,0x1017E5B,0x1017EFE,0x1018BBE,0x12174D0,0x121A72F,0x1241F43,0x1245F36,0x1246173,0x12499D2,0x125AA73,0x125AB03,0x125D0AA,0x125D2B7,0x1264B43,0x1267133,0x127D303,0x127E211,0x12BFBB4,0x12BFE02,0x12C0E77,0x12C2037,0x12C254F,0x12C2D90,0x12C3A42,0x12C417C,0x13B6ED6,0x13B7709,0x13BC953,0x13CD791,0x1413303,0x1413B12,0x1440073,0x144C02A,0x144CF18,0x14733E3,0x1677B53,0x167ADB2,0x167B1A4,0x167B8C6,0x167D48D,0x167EAB8,0x167FCDE,0x167FF2C,0x168017A,0x1680AB6,0x1680B79,0x1681E14,0x1682E15,0x168368E,0x1684CDC,0x1687192,0x16875A7,0x16884B5,0x1688C85,0x1689455,0x1689C25,0x168A3F5,0x168ABC5,0x168B395,0x168BE4D,0x168BEBF,0x17DB3D9,0x17DF848,0x182ECA3,0x18579C3,0x18711CA,0x1871E4A,0x1872D5B,0x1881543,0x189B142,0x18C880B,0x18C8CF7,0x18C950D,0x18C9D92,0x18CCC95,0x18CEDB7,0x18D0EF5,0x18DD523,0x18DD609,0x18DFB0E,0x1AF3EE9,0x1AF6231,0x1AF891F,0x1AF9F3A,0x1AFADF7,0x1AFBDC3,0x1AFC997,0x1AFD87F,0x1AFDC08,0x1AFFB82,0x1AFFEED,0x1B01428,0x1B0149A,0x1B0206D,0x1B02C40,0x1B03813,0x1B043E6,0x1B04FB9,0x1B05B8C,0x1B069FA,0x1B21073,0x1B2111E,0x1B21EBD,0x1C14F23,0x1C2F993,0x1C41969,0x1C87753,0x1C8A121,0x1C8A35E,0x1C8C969,0x1C92883,0x1CB21C3,0x1CB2843,0x1CB2AFB,0x1DDB9EF,0x1DDC8E6,0x1E7F953,0x1EB00E6,0x1EB189A,0x1EB1AE2,0x1EB1D2A,0x1EB21E1,0x1EB3477,0x1EB3B4E,0x1EB3D8D,0x1EB7BE9,0x1EB80CD,0x1EB88BD,0x1EBF834,0x1EBFC63,0x1EC6D7B,0x1EC7079,0x1EC770D,0x1EC7D56,0x1EE92C7,0x1EE9467,0x1EEC2A2,0x1EEC4F0,0x1EEC73E,0x1EFB29C,0x1F05C2F,0x1F0FADF,0x1F1005D,0x1F1432D,0x1F14610,0x1F147B0,0x1F20B23,0x1F2C28E,0x1F2C6CF,0x1F3BA53,0x1F56E58,0x1F57509,0x1F580D7,0x1F62F13,0x1F76D89,0x1F78644,0x1F79C6A,0x1F7A47F,0x1F8EE53,0x1F9FA96,0x1FA1DE1,0x1FA9513,0x1FA9DB4,0x1FAFCA3,0x1FC3193,0x20540E3,0x20633AE,0x20638EA,0x206AFB5,0x206B720,0x207D0D3,0x2081B7D,0x2517B33,0x2D06CB5,0x2D0FEFE };
+local int i;
+
+for (i = 0; i < sizeof(mco_offsets)/sizeof(int); i++) {
+    skip_mco = false;
+
+    FSeek(mco_offsets[i]);
+    mesh_container_outer mco;
+}
 
 /*
 local int i = 0;
