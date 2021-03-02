@@ -4,6 +4,8 @@
 #include "types.hpp"
 #include "wal_toc.hpp"
 
+#include "3rdparty/cxxopts.hpp"
+
 #include <iterator>
 #include <stdexcept>
 #include <vector>

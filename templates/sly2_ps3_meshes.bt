@@ -322,11 +322,17 @@ typedef struct szme_data_t (u8 flags, u16 u2_cnt, u8 e2_cnt) {
         u2 u2_ (flags) [u2_cnt];
 } szme_data <optimize=false, bgcolor=cYellow>;
 
-typedef struct e17_t {
-    u16 count;
-    if (count != 0)
-        Assert(false); // TODO
-} e17;
+typedef struct d9_t {
+    u16 d9_0;
+    u16 d9_1;
+    u8 d9_2;
+} d9 <optimize=false, bgcolor=cLtRed>;
+
+typedef struct d7_t {
+    u16 d9_cnt;
+    if (d9_cnt > 0)
+        d9 d9_[d9_cnt];
+} d7 <optimize=false, bgcolor=cLtBlue>;
 
 typedef struct szme_t_ (u16 u2_cnt) {
     u8 flags;
@@ -364,9 +370,13 @@ typedef struct szme_t_ (u16 u2_cnt) {
         u8 e16;
     }
 
-    u16 e17_cnt;
-    if (e17_cnt > 0)
-        e17 e17_[e17_cnt];
+    u16 d7_cnt;
+    if (d7_cnt != 0) {
+        d7 d7_[d7_cnt];
+
+        u16 d8_cnt;
+        u16 d8[d8_cnt];
+    }
 
     u16 szme_data_cnt;
     szme_data szme_data_ (flags, u2_cnt, e2_cnt) [szme_data_cnt];
@@ -453,6 +463,11 @@ typedef struct mesh_data_t (ubyte i0)
 } mesh_data <read=read_mesh_data, bgcolor=cDkYellow, optimize=false>;
 string read_mesh_data(mesh_data &v) {
     string s;
+    if (v.u0 == 0) {
+        SPrintf(s, "type %d u2 %d", v.type, v.u2_cnt);
+    } else {
+        SPrintf(s, "u0 %d", v.u0);
+    }
     return s;
 }
 
@@ -464,18 +479,28 @@ typedef struct mesh_data_unk3_t {
     }
 } mesh_data_unk3 <bgcolor=cGreen, optimize=false>;
 
+typedef struct i3_t {
+    u16 i3_0;
+    if ((((int)i3_0) & 0xFFFF) != 0xffffffff) // wat
+        u8 i3_1[0x20];
+} i3 <bgcolor=cBlue, optimize=false>;
+
 typedef struct mesh_container_t {
     ubyte i0;
     vec3 i1;
     float i2;
-    ubyte i3;
+    ubyte i3_cnt;
+    if (i3_cnt > 0)
+        i3 i3_[i3_cnt];
     ubyte i4;
 
     uint16 mesh_count <bgcolor=cRed>;
     local int i = 0;
+    local int mesh_count_actual = 0;
     local int do_break = false;
     while (i < mesh_count) {
         mesh_data mesh (i0);
+        mesh_count_actual++;
         if (skip_mco) {
             do_break = true;
             break;
@@ -497,7 +522,15 @@ typedef struct mesh_container_t {
 } mesh_container <bgcolor=cDkGreen, read=read_mesh_container, optimize=false>;
 string read_mesh_container(mesh_container &v) {
     string s;
-    SPrintf(s, "mesh# %d", v.mesh_count);
+    SPrintf(s, "mesh# %d types ", v.mesh_count);
+    local int i;
+    for (i = 0; i < v.mesh_count_actual; i++) {
+        if (v.mesh[i].u0 == 0)
+            SPrintf(s, "%s %d", s, v.mesh[i].type);
+        else
+            SPrintf(s, "%s [%d]", s, v.mesh[i].u0);
+    }
+
     return s;
 }
 
