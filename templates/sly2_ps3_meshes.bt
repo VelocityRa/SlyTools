@@ -467,14 +467,17 @@ typedef struct mesh_data_t (ubyte i0)
             //Assert(false, "type == 1"); // TODO
             Printf("[%06X] TODO: type == 1\n", FTell());
             skip_mco = true;
+            u8 dummy_type_1;
         } else if (type == 2) {
             //Assert(false, "type == 2"); // TODO
             Printf("[%06X] TODO: type == 2\n", FTell());
             skip_mco = true;
+            u8 dummy_type_2;
         } else if (type == 3) {
             //Assert(false, "type == 3"); // TODO
             Printf("[%06X] TODO: type == 3\n", FTell());
             skip_mco = true;
+            u8 dummy_type_3;
         } else {
             Assert(false);
         }
@@ -514,9 +517,12 @@ typedef struct o_t {
 typedef struct mesh_data_unk3_t {
     u16 count;
 
-    // TODO
-    skip_mco = true;
-    break;
+    if (count != 0) {       
+        // TODO
+        skip_mco = true;
+        u8 dummy_unk3;
+        break;
+    }
 
     local int i = 0;
     while (i < count) {
