@@ -14,7 +14,7 @@
 Compresses files to the LZSS-derived format that the official game expects for Sly level files.
 
 ## Templates
-The `templates/` directory contains various [010 Editor](https://www.sweetscape.com/010editor/) templates for game files, in-memory data structures, memory dumps, etc that were developed during reserach.
+The `templates/` directory contains various [010 Editor](https://www.sweetscape.com/010editor/) templates for game files, in-memory data structures, memory dumps, etc that were developed during research.
 This is a dump of everything that I have, some of them might have been superseeded and not useful anymore.
 
 ## Instructions
@@ -22,7 +22,7 @@ This is a dump of everything that I have, some of them might have been superseed
 1) Download the tools from the Releases panel on the right (or build them)1)
 1) If you're extracting PS2 files, move to step 7. For PS3 continue.
 1) Download the [psarc](http://www.mediafire.com/file/aegbgpkm3xfot80/psarc.zip/file) tool
-1) Go to your installed game's USRDIR directory (example: `C:/rpcs3\dev_hdd0\game\NPUA80663\USRDIR`).
+1) Go to your installed game's USRDIR directory (example: `C:/rpcs3/dev_hdd0/game/NPUA80663/USRDIR`).
    We'll now refer to this as `$USRDIR`, replace it where appropriate.
 1) Copy `psarc.exe` there (or use the full path to it in the next command)
 1) Run this to extract the contents.
