@@ -438,6 +438,44 @@ typedef struct mesh_data_t0_t (u16 u2_cnt, u8 i0) {
     szme szme_ (u2_cnt, i0);
 } mesh_data_t0 <open=true, bgcolor=cDkRed, open=true>;
 
+typedef struct mesh_data_t3_t {
+    u8 p0_cnt;
+    if (p0_cnt > 0) {
+        struct {
+            u32 p1;
+            u32 p2;
+        } p0[p0_cnt];
+    }
+
+    u16 p3_cnt;
+    if (p3_cnt > 0) {
+        struct p3_t {
+            u16 p4;
+            u8 p5_cnt;
+            u8 p6_cnt;
+            if (p6_cnt > 0)
+                vec3 p6[p6_cnt];
+    
+            if (p0_cnt > 0) {
+                u8 p7[4];
+        
+                local int p0_cnt_n = p0_cnt;
+                if (p0_cnt > 3)
+                    p0_cnt_n = 4;
+    
+                u8 p8[p0_cnt_n * p6_cnt];
+            };
+            if (p5_cnt > 0)
+                u8 p5[p5_cnt];
+
+            local uint p9_cnt = ((int)(p5_cnt + 0x1f) >> 5);            
+            if (p6_cnt > 0)
+                float p6_2[p9_cnt];
+
+        } p3[p3_cnt] <optimize=false>;
+    }
+} mesh_data_t3 <open=true, bgcolor=cDkGreen, open=true>;
+
 local int skip_mco = false;
 
 typedef struct mesh_data_t (ubyte i0)
@@ -474,10 +512,7 @@ typedef struct mesh_data_t (ubyte i0)
             skip_mco = true;
             u8 dummy_type_2;
         } else if (type == 3) {
-            //Assert(false, "type == 3"); // TODO
-            Printf("[%06X] TODO: type == 3\n", FTell());
-            skip_mco = true;
-            u8 dummy_type_3;
+             mesh_data_t3 t3;
         } else {
             Assert(false);
         }
