@@ -435,7 +435,7 @@ typedef struct mesh_data_t0_t (u16 u2_cnt, u8 i0) {
     char magic[4] <hidden=true>;
     Assert(magic[0] == 'S' && magic[1] == 'Z' && magic[2] == 'M' && magic[3] == 'E');
 
-    szme szme_ (u2_cnt, 0);
+    szme szme_ (u2_cnt, i0);
 } mesh_data_t0 <open=true, bgcolor=cDkRed, open=true>;
 
 local int skip_mco = false;
@@ -534,7 +534,7 @@ typedef struct mesh_data_unk3_t {
 
 typedef struct i3_t {
     u16 i3_0;
-    if ((((int)i3_0) & 0xFFFF) != 0xffffffff) // wat
+    if ((((int)i3_0) & 0xFFFF) != 0xffffffff) // wat. this is always true innit
         u8 i3_1[0x20];
 } i3 <bgcolor=cBlue, optimize=false>;
 
@@ -805,6 +805,9 @@ for (i = 0; i < sizeof(mco_offsets)/sizeof(int); i++) {
     FSeek(mco_offsets[i]);
     mesh_container_outer mco;
 }
+
+FSeek(0x451F24);
+vec4 unk_vec4[0x204];
 
 /*
 local int i = 0;
