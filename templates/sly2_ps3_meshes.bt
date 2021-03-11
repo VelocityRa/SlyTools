@@ -359,6 +359,9 @@ typedef struct d7_t {
 } d7 <optimize=false, bgcolor=cLtBlue>;
 
 typedef struct szme_t (u16 u2_cnt, u8 i0) {
+    char magic[4] <hidden=true>;
+    Assert(magic[0] == 'S' && magic[1] == 'Z' && magic[2] == 'M' && magic[3] == 'E');
+
     u8 flags;
     u16 e1;
     u8 e2_cnt;
@@ -431,9 +434,6 @@ typedef struct mesh_data_t0_t (u16 u2_cnt, u8 i0) {
 
         vertex_data vertex_data_(start_offset);
     }
-
-    char magic[4] <hidden=true>;
-    Assert(magic[0] == 'S' && magic[1] == 'Z' && magic[2] == 'M' && magic[3] == 'E');
 
     szme szme_ (u2_cnt, i0);
 } mesh_data_t0 <open=true, bgcolor=cDkRed, open=true>;
