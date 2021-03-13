@@ -279,7 +279,7 @@ struct k13 {
     }
 };
 
-typedef struct u2_t (u8 i0) {
+typedef struct mesh_instance_t (u8 i0) {
     u8 g0;
 
     if (i0 == 0)
@@ -296,7 +296,7 @@ typedef struct u2_t (u8 i0) {
     u8 g5_ign;
 
     k13 k13_;
-} u2 <optimize=false, bgcolor=cBlue>;
+} mesh_instance <optimize=false, bgcolor=cBlue>;
 
 u8 min(u8 x, u8 y) {
     if (x < y)
@@ -305,7 +305,7 @@ u8 min(u8 x, u8 y) {
         return y;
 }
 
-typedef struct szme_data_t (u8 flags, u16 u2_cnt, u8 e2_cnt, u8 i0) {
+typedef struct szme_data_t (u8 flags, u16 instance_cnt, u8 e2_cnt, u8 i0) {
     u8 a0_cnt;
 
     local uint a0_unk_cnt = 0;
@@ -342,8 +342,8 @@ typedef struct szme_data_t (u8 flags, u16 u2_cnt, u8 e2_cnt, u8 i0) {
         u32 a6[a6_uint_cnt];
 
 // TODO: remove?
-    //if (u2_cnt > 0)
-    //    u2 u2_ (flags, i0) [u2_cnt];
+    //if (instance_cnt > 0)
+    //    u2 u2_ (flags, i0) [instance_cnt];
 } szme_data <optimize=false, bgcolor=cYellow>;
 
 typedef struct d9_t {
@@ -358,7 +358,7 @@ typedef struct d7_t {
         d9 d9_[d9_cnt];
 } d7 <optimize=false, bgcolor=cLtBlue>;
 
-typedef struct szme_t (u16 u2_cnt, u8 i0) {
+typedef struct szme_t (u16 instance_cnt, u8 i0) {
     char magic[4] <hidden=true>;
     Assert(magic[0] == 'S' && magic[1] == 'Z' && magic[2] == 'M' && magic[3] == 'E');
 
@@ -410,7 +410,7 @@ typedef struct szme_t (u16 u2_cnt, u8 i0) {
     }
 */
     u16 szme_data_cnt;
-    szme_data szme_data_ (flags, u2_cnt, e2_cnt, i0) [szme_data_cnt];
+    szme_data szme_data_ (flags, instance_cnt, e2_cnt, i0) [szme_data_cnt];
 } szme <optimize=false, bgcolor=cLtGreen>;
 string read_szme_t(szme_t &v) {
     string s;
@@ -420,7 +420,7 @@ string read_szme_t(szme_t &v) {
     return s;
 }
 
-typedef struct mesh_data_t0_t (u16 u2_cnt, u8 i0) {
+typedef struct mesh_data_t0_t (u16 instance_cnt, u8 i0) {
     szms_header szms;
 
     local int64 start_offset = FTell();
@@ -435,7 +435,7 @@ typedef struct mesh_data_t0_t (u16 u2_cnt, u8 i0) {
         vertex_data vertex_data_(start_offset);
     }
 
-    szme szme_ (u2_cnt, i0);
+    szme szme_ (instance_cnt, i0);
 } mesh_data_t0 <open=true, bgcolor=cDkRed, open=true>;
 
 typedef struct mesh_data_t3_t {
@@ -470,7 +470,7 @@ typedef struct mesh_data_t3_t {
 
             local uint p9_cnt = ((int)(p5_cnt + 0x1f) >> 5);            
             if (p6_cnt > 0)
-                float p6_2[p9_cnt];
+                u32 p6_2[p9_cnt];
 
         } p3[p3_cnt] <optimize=false>;
     }
@@ -484,7 +484,7 @@ typedef struct mesh_data_t (ubyte i0)
 
     if (u0 == 0) {
         ubyte type;
-        uint16 u2_cnt;
+        uint16 instance_cnt;
         uint16 u3;
         ubyte u3_;
         f32 u4;
@@ -500,7 +500,7 @@ typedef struct mesh_data_t (ubyte i0)
             float u12;
         }
         if (type == 0) {
-             mesh_data_t0 t0 (u2_cnt, i0);
+             mesh_data_t0 t0 (instance_cnt, i0);
         } else if (type == 1) {
             //Assert(false, "type == 1"); // TODO
             Printf("[%06X] TODO: type == 1\n", FTell());
@@ -518,8 +518,8 @@ typedef struct mesh_data_t (ubyte i0)
         }
         if (skip_mco)
             break;
-        if (u2_cnt > 0)
-            u2 u2_ (i0) [u2_cnt];
+        if (instance_cnt > 0)
+            mesh_instance instance (i0) [instance_cnt];
     } else {
         u16 u1_alt[u0];
         u32 u2_ign_cnt;
@@ -530,7 +530,7 @@ typedef struct mesh_data_t (ubyte i0)
 string read_mesh_data(mesh_data &v) {
     string s;
     if (v.u0 == 0) {
-        SPrintf(s, "type: %d u2: %d", v.type, v.u2_cnt);
+        SPrintf(s, "type: %d instance#: %d", v.type, v.instance_cnt);
     } else {
         SPrintf(s, "u0: %d", v.u0);
     }
@@ -594,8 +594,8 @@ typedef struct mesh_container_t {
             break;
         }
         if (mesh.u0 == 0) {
-            //Printf("i [%d] += mesh.u2_cnt [%d]\n", i, mesh.u2_cnt);
-            i += mesh.u2_cnt;
+            //Printf("i [%d] += mesh.instance_cnt [%d]\n", i, mesh.instance_cnt);
+            i += mesh.instance_cnt;
         } else {
             //Printf("i++ [d] [%d]\n", i, i+1);
             i--;
