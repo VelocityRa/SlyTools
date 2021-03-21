@@ -17,7 +17,7 @@ if defined ENABLE_COMPRESS_LEVEL (
 )
 
 echo --- Packing to .WAC/.WAL ---
-%SLY_TOOLS%\sly_packer.exe "%SLY1_DATA%" %SLY1_ROOT%
+%SLY_TOOLS%\sly_1_packer.exe "%SLY1_DATA%" %SLY1_ROOT%
 
 echo --- Packaging and compressing to .psarc ---
 Robocopy %SLY_USRDIR% %CD%\data\Sly1_filelist.txt > nul
