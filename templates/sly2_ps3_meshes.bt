@@ -490,8 +490,8 @@ typedef struct mesh_data_t (ubyte i0)
         ubyte u8_;
 
         if (i0 == 0) {
-            vec3 u9;
-            float u10;
+            vec3 occl_sphere_pos;     // sphere pos? (used for view frustum culling?)
+            float occl_sphere_radius; // sphere radius? (used for view frustum culling?)
             u32 u11;
             float u12;
         }
@@ -570,8 +570,8 @@ typedef struct i3_t {
 
 typedef struct mesh_container_t {
     ubyte i0;
-    vec3 i1;
-    float i2;
+    vec3 occl_sphere_pos;  // sphere pos? (used for view frustum culling?)
+    float occl_sphere_radius; // sphere radius? (used for view frustum culling?)
     ubyte i3_cnt;
     if (i3_cnt > 0)
         i3 i3_[i3_cnt];
@@ -619,7 +619,7 @@ string read_mesh_container(mesh_container &v) {
 typedef struct mesh_container_outer_c2_t {
     u16 c3;
     u16 c4;
-    u32 c5;
+    u32 c5 <format=decimal>;
     u8 flags;
     if ((flags & 1) == 0) {
         if ((flags & 2) != 0) {
