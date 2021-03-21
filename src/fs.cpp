@@ -17,19 +17,18 @@ namespace filesystem {
     // Don't eat new lines in binary
     file.unsetf(std::ios::skipws);
 
-    Buffer data;
+    static Buffer data;
 
     const bool read_whole_file = (read_size == 0);
     if (read_whole_file) {
         // Get file size
-        file.seekg(0, std::ios::end);
-        read_size = file.tellg();
-        file.seekg(0, std::ios::beg);
+        read_size = std::filesystem::file_size(filename);
 
         data.reserve(read_size);
 
         // Read file
         data.insert(data.begin(), std::istream_iterator<u8>(file), std::istream_iterator<u8>());
+        data.resize(read_size);
     } else {
         data.resize(read_size);
 

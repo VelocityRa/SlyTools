@@ -28,7 +28,7 @@ struct WalToc {
     std::vector<WalTocEntry> entries;
 };
 
-WalToc parse_wal_toc(const Buffer& wal_toc_buf) {
+WalToc wal_toc_parse(const Buffer& wal_toc_buf) {
     WalToc toc;
     BufferStream s(wal_toc_buf);
 
@@ -56,4 +56,18 @@ WalToc parse_wal_toc(const Buffer& wal_toc_buf) {
     }
 
     return toc;
+}
+
+constexpr u32 MAX_TOC_SIZE = 0x40000;
+
+void wal_toc_crypt(u8 *data) {
+    u64 lVar14 = 0x7a69;
+    u8* data_ptr = data;
+    u64 uVar4;
+    for (u32 i = 0; i < MAX_TOC_SIZE; ++i) {
+        uVar4 = lVar14 * 0x1a3 + 0x181d;
+        lVar14 = uVar4 + ((uVar4 & 0xffffffff) / 0x7262) * -0x7262;
+        *data_ptr = (u8)(((u64)(u32)((int)lVar14 << 8) - lVar14 & 0xffffffff) / 0x7262) ^ *data_ptr;
+        data_ptr++;
+    }
 }

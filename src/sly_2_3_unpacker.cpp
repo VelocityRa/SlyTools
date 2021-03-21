@@ -14,8 +14,6 @@ constexpr bool DEBUG_MODE = false;
 
 constexpr size_t SECTOR_SIZE = 2048;
 
-constexpr u32 MAX_TOC_SIZE = 0x40000;
-
 int main(int argc, char* argv[]) {
     try {
         if (argc < 2)
@@ -33,19 +31,11 @@ int main(int argc, char* argv[]) {
 
         // Decrypt WAL TOC
 
-        u64 lVar14 = 0x7a69;
-        u8* data_ptr = static_cast<u8*>(wal_toc_buf.data());
-        u64 uVar4;
-        for (u32 i = 0; i < MAX_TOC_SIZE; ++i) {
-            uVar4 = lVar14 * 0x1a3 + 0x181d;
-            lVar14 = uVar4 + ((uVar4 & 0xffffffff) / 0x7262) * -0x7262;
-            *data_ptr = (u8)(((u64)(u32)((int)lVar14 << 8) - lVar14 & 0xffffffff) / 0x7262) ^ *data_ptr;
-            data_ptr++;
-        }
+        wal_toc_crypt(wal_toc_buf.data());
 
         // Parse WAL TOC
 
-        const WalToc wal_toc = parse_wal_toc(wal_toc_buf);
+        const WalToc wal_toc = wal_toc_parse(wal_toc_buf);
 
         const auto wal_fp = fopen64(wal_path.string().c_str(), "rb");
         if (wal_fp == NULL)
