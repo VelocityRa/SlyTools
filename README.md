@@ -1,14 +1,16 @@
 ## Tools
 
 ### Unpacker
-**Input**: `WAC` + `WAL` file pair
+**Input** for Sly 1: `WAC` + `WAL` file pair
+**Input** for Sly 2/3: `WAL`
 
 **Output**: Files contained within the archive
 
 ### Packer
 **Input**: Directory with files to archive
 
-**Output**: `WAC` + `WAL` file pair
+**Output** for Sly 1: `WAC` + `WAL` file pair
+**Output** for Sly 2/3: `WAL`
 
 ### Compressor
 Compresses files to the LZSS-derived format that the official game expects for Sly level files.
@@ -36,9 +38,9 @@ This is a dump of everything that I have, some of them might have been superseed
    ```cmd
    sly_unpacker_1.exe $USRDIR/Sly1/SLY.WAC .
    ```
-   For Sly 2 and 3 (replace `Sly2` with `Sly3` below if appropriate):
+   For Sly 2 and 3 (change paths as needed):
    ```cmd
-   sly_unpacker_2_3.exe $USRDIR/Sly2/SLY.WAC .
+   sly_unpacker_2_3.exe $USRDIR/Sly2/SLY2.WAL .
    ```
    After a while you should see an `extracted/` dir in there, with all the games' files.
 
