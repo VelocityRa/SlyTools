@@ -22,3 +22,5 @@ add_executable(sly_1_packer src/sly_1_packer.cpp)
 
 add_executable(sly_2_3_unpacker src/sly_2_3_unpacker.cpp src/wal_toc.hpp src/file_magic_utils.hpp)
 add_executable(sly_2_3_packer src/sly_2_3_packer.cpp src/wal_toc.hpp src/string_utils.h)
+
+add_executable(stuart_little_3_unpacker src/stuart_little_3_unpacker.cpp)
