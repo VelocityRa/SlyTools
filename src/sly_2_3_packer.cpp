@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
 
         // Read back TOC data, encrypt it, and write it again (a bit dumb)
         wal_ofs.flush();
-        auto wal_toc_data = filesystem::file_read(output_wal_path.string());
+        auto wal_toc_data = filesystem::file_read(output_wal_path);
         assert(wal_toc_data.size() == MAX_TOC_SIZE);
         wal_toc_crypt(wal_toc_data.data());
         wal_ofs.seekp(0, std::ios::beg);
@@ -136,11 +136,11 @@ int main(int argc, char* argv[]) {
 
             stream_pad_until(wal_ofs, entry.offset * SECTOR_SIZE);
 
-            const auto data = filesystem::file_read(entry.path.string());
+            const auto data = filesystem::file_read(entry.path);
             stream_write(wal_ofs, data);
         }
 
-        printf("\nDone writing %lld files.\n", wal_toc_entries_flat_ordered.size());
+        printf("\nDone writing %zu files.\n", wal_toc_entries_flat_ordered.size());
 
     } catch (const std::runtime_error& e) {
         printf("Error: %s\n", e.what());
