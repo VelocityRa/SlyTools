@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
             throw std::runtime_error(std::string(argv[0]) + " <input_file> [<output_dir>]");
 
         const std::filesystem::path wal_path{ argv[1] };
-        auto wal_toc_buf = filesystem::file_read(wal_path.string(), MAX_TOC_SIZE);
+        auto wal_toc_buf = filesystem::file_read(wal_path, MAX_TOC_SIZE);
 
         std::filesystem::path output_path;
         if (argc < 3)
