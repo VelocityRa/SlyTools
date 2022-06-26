@@ -23,7 +23,7 @@ This is a dump of everything that I have, some of them might have been superseed
 ### Extracting assets
 1) Download the tools from the Releases panel on the right (or build them)1)
 1) If you're extracting PS2 files, move to step 7. For PS3 continue.
-1) Download the [psarc](http://www.mediafire.com/file/aegbgpkm3xfot80/psarc.zip/file) tool
+1) Download the [psarc]([http://www.mediafire.com/file/aegbgpkm3xfot80/psarc.zip/file](https://cdn.discordapp.com/attachments/439459490702557195/990547521858322462/psarc.exe)) tool
 1) Go to your installed game's USRDIR directory (example: `C:/rpcs3/dev_hdd0/game/NPUA80663/USRDIR`).
    We'll now refer to this as `$USRDIR`, replace it where appropriate.
 1) Copy `psarc.exe` there (or use the full path to it in the next command)
