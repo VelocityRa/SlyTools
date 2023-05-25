@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
 
             wac_entry.type = (WACType)name_str.back();
             wac_entry.name = name_str.substr(0, name_str.size() - ext_size);
-            wac_entry.data = filesystem::file_read(full_path_str);
+            wac_entry.data = filesystem::file_read(std::string_view(full_path_str));
             wac_entry.size = wac_entry.data.size();
             wac_entry.offset = wal_next_sector_offset;
 

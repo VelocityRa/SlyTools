@@ -16,7 +16,7 @@ int main(int argc, const char** argv) {
     }
 
     const std::string input_filename = argv[1];
-    const auto input_data = filesystem::file_read(input_filename);
+    const auto input_data = filesystem::file_read(std::string_view(input_filename));
     const auto input_size = input_data.size();
 
     char output_data[CHUNK_SIZE*2];
