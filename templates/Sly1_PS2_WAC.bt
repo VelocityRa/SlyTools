@@ -1,0 +1,84 @@
+//
+// Initialization
+//
+
+LittleEndian();
+DisplayFormatHex();
+
+//
+// Common types
+//
+
+typedef ubyte bool;
+typedef ubyte u8;
+typedef uint16 u16;
+typedef uint32 u32;
+typedef uint64 u64;
+typedef byte s8;
+typedef int16 s16;
+typedef int32 s32;
+typedef int64 s64;
+typedef float f32;
+typedef double f64;
+
+typedef struct align_t (int alignment) {
+    local int val = FTell();
+    local int pad_size = (-val) & (alignment - 1);
+    if (pad_size != 0)
+        byte pad[pad_size];
+} align <optimize=false, hidden=true>;
+
+//
+// Types
+//
+
+typedef struct String_t {
+    string str;
+} String <optimize=false, read=ReadString_>;
+string ReadString_(String &v) {
+    string s;
+    SPrintf(s, "%s", v.str);
+    return s;
+}
+typedef struct Strings_t (u32 c) {
+    String strings[c];
+} Strings <optimize=false>;
+
+    local int i = 0;
+typedef struct WacOffsetSize_t (Strings& filenames) {
+    u32 sector;
+    u32 size;
+
+    local string filename = filenames.strings[i].str;
+    i = i + 1;
+} WacOffsetSize <optimize=false, read=ReadWacOffsetSize>;
+string ReadWacOffsetSize(WacOffsetSize &v) {
+    string s;
+    SPrintf(s, "%08X %08X %s", v.sector, v.size, v.filename);
+    return s;
+}
+typedef struct WacOffsetsSizess_t (Strings& filenames, u32 c) {
+    WacOffsetSize wac_offset_size(filenames)[c];
+} WacOffsetsSizes <optimize=false>;
+
+typedef struct Wac_t {
+    u32 brx_version;
+    Assert(brx_version == 0x2D1);
+
+    u32 world_c;
+    u32 entry_c;
+
+    Strings worlds(world_c);
+    Strings filenames(entry_c);
+    
+    if (FTell() & 0x3)
+        align _pad(4);
+
+    WacOffsetsSizes wac_offs_sizes(filenames, entry_c);
+} Wac <optimize=false>;
+
+//
+// Object allocation
+//
+
+Wac wac<open=true>;
