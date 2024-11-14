@@ -1,0 +1,173 @@
+//
+// Initialization
+//
+
+LittleEndian();
+DisplayFormatHex();
+
+//
+// Utility functions
+//
+
+void hexdump(int64 pos, int n) {
+    local uchar buf[n];
+    ReadBytes(buf, pos, n);
+
+    local int i;
+    for (i = 0; i < n; ++i) {
+        Printf("%02X", buf[i]);
+        if (i % 4 == 3)
+            Printf(" ");
+    }
+}
+
+
+//
+// Common types
+//
+
+typedef ubyte bool;
+typedef ubyte u8;
+typedef uint16 u16;
+typedef uint32 u32;
+typedef uint64 u64;
+typedef byte s8;
+typedef int16 s16;
+typedef int32 s32;
+typedef int64 s64;
+typedef float f32;
+typedef double f64;
+
+typedef struct bvec4_t
+{
+    uchar x, y, z, w;
+} bvec4 <read=read_bvec4, bgcolor=cLtBlue>;
+string read_bvec4(bvec4 &v) {
+    string s;
+    SPrintf(s, "[%02X %02X %02X %02X]",
+        v.x, v.y, v.z, v.w);
+    return s;
+}
+
+typedef struct vec2_t
+{
+    float x, y;
+} vec2 <read=read_vec2, bgcolor=cPurple>;
+string read_vec2(vec2 &v) {
+    string s;
+    SPrintf(s, "[%7.3f \t%7.3f]",
+        v.x, v.y);
+    return s;
+}
+
+typedef struct vec3_t
+{
+    float x, y, z;
+} vec3 <read=read_vec3, bgcolor=cDkPurple>;
+string read_vec3(vec3 &v) {
+    string s;
+    SPrintf(s, "[%7.3f \t%7.3f \t%7.3f]",
+        v.x, v.y, v.z);
+    return s;
+}
+
+typedef struct uvec3_t
+{
+    uint32 x, y, z;
+} uvec3 <read=read_uvec3, bgcolor=cDkBlue>;
+string read_uvec3(uvec3 &v) {
+    string s;
+    SPrintf(s, "[%d %d %d]",
+        v.x, v.y, v.z);
+    return s;
+}
+
+typedef struct vec4_t
+{
+    float x, y, z, w;
+} vec4 <read=read_vec4, bgcolor=cDkPurple>;
+string read_vec4(vec4 &v) {
+    string s;
+    SPrintf(s, "[%7.3f \t%7.3f \t%7.3f \t%7.3f]",
+        v.x, v.y, v.z, v.w);
+    return s;
+}
+
+typedef struct svec2_t
+{
+    uint16 x, y;
+} svec2 <read=read_svec2, bgcolor=cDkBlue>;
+string read_svec2(svec2 &v) {
+    string s;
+    SPrintf(s, "[%d %d %d]", v.x, v.y);
+    return s;
+}
+
+typedef struct align_t (int alignment) {
+    local int val = FTell();
+    local int pad_size = (-val) & (alignment - 1);
+    if (pad_size != 0)
+        byte pad[pad_size];
+} align <optimize=false>;
+
+
+//
+// Level Tables / Initial structs
+//
+
+typedef struct InfHeader_t {
+    u32 unk0;
+    u32 file_size;
+    u32 unk_arrays_size;
+    u32 arr0_off;
+    u32 arr1_off;
+    u32 arr2_off;
+} InfHeader;
+
+typedef struct InfFileDescriptor_t {
+    u32 sector_off;
+    u32 size;
+    u32 string_off <hidden=true>;
+    local int off = FTell();
+    FSeek(string_off);
+    string name;
+    FSeek(off);
+} InfFileDescriptor <optimize=false, read=ReadInfFileDescriptor>;
+string ReadInfFileDescriptor(InfFileDescriptor &v) {
+    string s;
+    SPrintf(s, "%05X  %06X  |  %s", v.sector_off, v.size, v.name);
+    return s;
+}
+struct InfFileDescriptors (u32 file_count) {
+    InfFileDescriptor desc[file_count];
+};
+
+typedef struct InfFileDescriptor1_t {
+    u32 string_off <hidden=true>;
+    local int off = FTell();
+    FSeek(string_off);
+    string name;
+    FSeek(off);
+} InfFileDescriptor1 <optimize=false, read=ReadInfFileDescriptor1>;
+string ReadInfFileDescriptor1(InfFileDescriptor1 &v) {
+    string s;
+    SPrintf(s, "%s", v.name);
+    return s;
+}
+struct InfFileDescriptor1s (u32 file_count) {
+    InfFileDescriptor1 desc[file_count];
+};
+
+//
+// Object allocation
+//
+
+InfHeader header;
+FSeek(header.arr0_off);
+InfFileDescriptors files(header.unk_arrays_size);
+//InfFileDescriptors files(0x10C4); // GARDEN
+//InfFileDescriptors files(97); // GLOBAL
+FSeek(header.arr1_off);
+InfFileDescriptor1s unk_arr1(header.unk_arrays_size);
+FSeek(header.arr2_off);
+u32 unk_arr2[header.unk_arrays_size];
