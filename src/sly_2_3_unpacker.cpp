@@ -19,15 +19,15 @@ int main(int argc, char* argv[]) {
         if (argc < 2)
             throw std::runtime_error(std::string(argv[0]) + " <input_file> [<output_dir>]");
 
-        const std::filesystem::path wal_path{ argv[1] };
-        auto wal_toc_buf = filesystem::file_read(wal_path, MAX_TOC_SIZE);
+        const fs::path wal_path{ argv[1] };
+        auto wal_toc_buf = fs::file_read(wal_path, MAX_TOC_SIZE);
 
-        std::filesystem::path output_path;
+        fs::path output_path;
         if (argc < 3)
             output_path = wal_path.parent_path() / "extracted";
         else
             output_path = argv[2];
-        std::filesystem::create_directory(output_path);
+        fs::create_directory(output_path);
 
         // Decrypt WAL TOC
 

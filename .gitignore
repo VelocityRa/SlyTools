@@ -3,6 +3,7 @@ tests/
 
 build/
 src/.vs/
+.vs
 
 ### C++ template
 # Compiled Object files

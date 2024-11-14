@@ -10,13 +10,15 @@
 
 constexpr bool DEBUG_MODE = false;
 
+using namespace ps3;
+
 int main(int argc, char* argv[]) {
     try {
         if (argc <= 2)
             throw std::runtime_error(std::string(argv[0]) +
                                      " <input_dir> [<output_file_wac> <output_file_wal>]");
 
-        const std::filesystem::path input_dir_path = argv[1];
+        const fs::path input_dir_path = argv[1];
 
         if (argc == 3)
             printf("Use either 1 or 3 arguments. Ignoring 2nd argument & extracting to working dir.\n");
@@ -37,7 +39,7 @@ int main(int argc, char* argv[]) {
         if (!DEBUG_MODE)
             printf("Packing files\n");
 
-        for (auto& p : std::filesystem::directory_iterator(input_dir_path)) {
+        for (auto& p : fs::directory_iterator(input_dir_path)) {
             if (!p.is_regular_file()) {
                 continue;
             }
@@ -45,11 +47,11 @@ int main(int argc, char* argv[]) {
             const auto name_str = p.path().filename().string();
             const auto ext_size = p.path().extension().string().size();
 
-            WACEntry wac_entry;
+            WacEntry wac_entry;
 
             wac_entry.type = (WACType)name_str.back();
             wac_entry.name = name_str.substr(0, name_str.size() - ext_size);
-            wac_entry.data = filesystem::file_read(std::string_view(full_path_str));
+            wac_entry.data = fs::file_read(full_path_str);
             wac_entry.size = wac_entry.data.size();
             wac_entry.offset = wal_next_sector_offset;
 

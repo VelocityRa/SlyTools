@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
 project(SlyTools LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -11,16 +11,18 @@ if (MINGW)
     link_libraries(stdc++fs)
 endif()
 
-add_library(fs_utils STATIC src/fs.cpp src/fs.hpp)
-link_libraries(fs_utils)
-
 add_executable(sly_decompressor src/sly_decompressor.cpp)
 add_executable(sly_compressor src/sly_compressor.cpp)
 
-add_executable(sly_1_unpacker src/sly_1_unpacker.cpp src/file_magic_utils.hpp)
+add_executable(sly_1_ps2_packer src/sly_1_ps2_packer.cpp)
+add_executable(sly_1_ps2_unpacker src/sly_1_ps2_unpacker.cpp)
+
+add_executable(sly_1_unpacker src/sly_1_unpacker.cpp)
 add_executable(sly_1_packer src/sly_1_packer.cpp)
 
-add_executable(sly_2_3_unpacker src/sly_2_3_unpacker.cpp src/wal_toc.hpp src/file_magic_utils.hpp)
-add_executable(sly_2_3_packer src/sly_2_3_packer.cpp src/wal_toc.hpp src/string_utils.h)
+add_executable(sly_2_3_unpacker src/sly_2_3_unpacker.cpp)
+add_executable(sly_2_3_packer src/sly_2_3_packer.cpp)
 
 add_executable(stuart_little_3_unpacker src/stuart_little_3_unpacker.cpp)
+
+add_executable(sly_1_ps2_baker src/sly_1_ps2_baker.cpp)

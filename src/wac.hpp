@@ -12,8 +12,10 @@
 
 constexpr bool DEBUG_MODE_ = false;
 
-constexpr size_t SECTOR_SIZE = 2048;
-constexpr size_t WAC_ENTRY_NAME_LEN = 0x17;
+constexpr u32 SECTOR_SIZE = 2048;
+constexpr u32 WAC_ENTRY_NAME_LEN = 0x17;
+
+namespace ps3 {
 
 enum class WACType : char {
     Audio = 'A',
@@ -23,7 +25,7 @@ enum class WACType : char {
     World = 'W',
 };
 
-struct WACEntry {
+struct WacEntry {
     std::string name;
     WACType type{};
     u32 offset{};
@@ -31,43 +33,57 @@ struct WACEntry {
     Buffer data{};
 };
 
-using WACEntries = std::vector<WACEntry>;
+using WacEntries = std::vector<WacEntry>;
 
-template <typename T>
-static WACEntries parse_wac(T& wac_data) {
-    u32 entry_count{};
-    stream_read(wac_data, entry_count);
+static WacEntries parse_wac(BufferStream& wac_data) {
+    u32 entry_count = wac_data.read<u32>();
     printf("Entry count: %d\n", entry_count);
 
-    WACEntries wac_entries;
+    WacEntries wac_entries;
     wac_entries.reserve(entry_count);
 
     for (unsigned i = 0; i < entry_count; ++i) {
-        WACEntry entry;
+        WacEntry entry;
 
-        char name[WAC_ENTRY_NAME_LEN + 1]{};
-        stream_read(wac_data, name, WAC_ENTRY_NAME_LEN);
-        entry.name.resize(std::strlen(name));
-        std::copy(name, name + entry.name.size(), entry.name.begin());
-
-        WACType type{};
-        stream_read(wac_data, type);
-        entry.type = type;
-
-        u32 offset{};
-        stream_read(wac_data, offset);
-        entry.offset = offset;
-
-        u32 size{};
-        stream_read(wac_data, size);
-        entry.size = size;
+        entry.name = wac_data.read_string(WAC_ENTRY_NAME_LEN + 1);
+        entry.type = wac_data.read<WACType>();
+        entry.offset = wac_data.read<u32>();
+        entry.size = wac_data.read<u32>();
 
         if (DEBUG_MODE_)
-            printf(" - %24s type %c offset 0x%08X (0x%016llX) size 0x%08X\n", name, (char)type, offset,
-                   offset * SECTOR_SIZE, size);
+            printf(" - %24s type %c offset 0x%08X (0x%016llX) size 0x%08X\n", entry.name,
+                   (char)entry.type, entry.offset, entry.offset * SECTOR_SIZE, entry.size);
 
         wac_entries.push_back(entry);
     }
 
     return wac_entries;
 }
+
+}
+
+namespace ps2 {
+
+struct Wac {
+    std::vector<std::string> world_names;
+    std::vector<std::string> file_names;
+
+    struct File {
+        u32 sector;
+        u32 size;
+    };
+    std::vector<File> files;
+};
+
+void crypt_ps2_wac(Buffer& wac_buf) {
+    s32 seed = 0x1dba1;
+
+    for (int i = 0; i < wac_buf.size(); i++) {
+        char* d = (char*)&((wac_buf.data())[i]);
+        seed = (seed * 0x1a3 + 0x181d) % 0x7262;
+        *d = *d ^ (u8)((seed * 0xff) / 0x7262);
+    }
+}
+
+
+}  // namespace ps2

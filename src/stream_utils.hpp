@@ -26,7 +26,7 @@ class BufferStream {
         offset_check(offset);
     }
 
-    std::string read_string(u64 pos_to_read = u64(-1)) {
+    std::string read_string(u64 size = u64(-1), u64 pos_to_read = u64(-1)) {
         const bool read_at_specific = (pos_to_read != u64(-1));
 
         u64 prev_offset;
@@ -37,7 +37,7 @@ class BufferStream {
         }
 
         const auto ptr = reinterpret_cast<const char*>(buf.data() + offset);
-        const auto str_size = std::strlen(ptr);
+        const auto str_size = (size != u64(-1)) ? size : std::strlen(ptr);
 
         std::string str;
         str.resize(str_size);
@@ -82,8 +82,12 @@ void stream_write(std::ostream& stream, const T& data, size_t write_size = sizeo
     stream.write(reinterpret_cast<const char*>(&data), write_size);
 }
 
+void stream_write_buf(std::ostream& stream, const u8* data, size_t size) {
+    stream.write(reinterpret_cast<const char*>(data), size);
+}
+
 void stream_write_buf(std::ostream& stream, const Buffer& data) {
-    stream.write(reinterpret_cast<const char*>(data.data()), data.size());
+    stream_write_buf(stream, data.data(), data.size());
 }
 void stream_write(std::ostream& stream, const Buffer& data) {
     stream_write_buf(stream, data);

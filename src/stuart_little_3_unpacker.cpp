@@ -4,15 +4,12 @@
 
 #include <algorithm>
 #include <cstdio>
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
-
-namespace fs = std::filesystem;
 
 constexpr bool DEBUG_MODE = false;
 constexpr size_t SECTOR_SIZE = 2048;
@@ -95,9 +92,9 @@ int main(int argc, char* argv[]) {
 #endif
         fs::create_directory(output_path);
 
-        const auto inf_entries = parse_inf(filesystem::file_read(inf_path));
+        const auto inf_entries = parse_inf(fs::file_read(inf_path));
 
-        const auto wad_data = filesystem::file_read(wad_path);
+        const auto wad_data = fs::file_read(wad_path);
 
         Buffer file_data;
         for (const auto& entry : inf_entries.entries) {
@@ -110,7 +107,7 @@ int main(int argc, char* argv[]) {
             const fs::path filename(pad_int(entry.id, 4) + "." + entry.name);
             const auto out_path = output_path / filename;
 
-            filesystem::file_write(out_path, file_data, false);
+            fs::file_write(out_path, file_data, false);
 
             if (DEBUG_MODE)
                 printf("Wrote offset 0x%08X size 0x%08X : %s\n", wad_offset, entry.size,

@@ -5,7 +5,6 @@
 #include "wal_toc.hpp"
 
 #include <cassert>
-#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <map>
@@ -18,24 +17,74 @@ constexpr bool DEBUG_MODE = false;
 
 constexpr size_t SECTOR_SIZE = 2048;
 
+/*
+local uint32 file_count = 0;
+local uint32 i = 0;
+local uint32 j = 0;
+
+typedef struct TOCFileEntry_t (string name, char type) {
+    uint32 offset;
+    uint32 size;
+
+    Printf("%c %s %X %X\n", type, name, offset, size);
+} TOCFileEntry <open=true>;
+
+typedef struct TOCEntry_t {
+    string name;
+
+    string types;
+
+    local uint32 types_count = sizeof(types) - 1;
+
+    if (FTell() & 0x3)
+        align _pad(4);
+
+    for (j = 0; j < types_count; j++)
+        TOCFileEntry file (name, types[j]);
+
+    file_count += types_count;
+} TOCEntry <optimize=false>;
+
+//
+// Object allocation
+//
+
+uint32 unk0;
+uint32 entry_count;
+TOCEntry entries[entry_count];
+ */
 
 struct Wal2TocFileEntry {
     u32 offset;
     u32 size;
     char type;
 
-    std::filesystem::path path;
+    fs::path path;
 };
 
 using Wal2Toc = std::map<std::string, std::vector<Wal2TocFileEntry>>;
 
 int main(int argc, char* argv[]) {
+#if 0
+    FILE* wal_out_fp = fopen64(argv[2], "r+b");
+    if (wal_out_fp == NULL) {
+        perror("Error opening file: ");
+        return -1;
+    }
+    _fseeki64(wal_out_fp, 0x6B090000, SEEK_SET);
+
+    const auto data = fs::file_read(argv[1]);
+    auto wrote = fwrite(data.data(), 1, data.size(), wal_out_fp);
+    printf("data size 0x%X wrote 0x%X\n", data.size(), wrote);
+    fclose(wal_out_fp);
+    return 0;
+#else
 
     try {
         if (argc <= 2)
             throw std::runtime_error(std::string(argv[0]) + " <input_dir> [<output_file_wal>]");
 
-        const std::filesystem::path input_dir_path = argv[1];
+        const fs::path input_dir_path = argv[1];
 
         const auto output_wal_path = (argc == 3) ? argv[2] : input_dir_path / "../SLY2_custom.WAL";
         std::ofstream wal_ofs(output_wal_path, std::ios::binary | std::ios::trunc);
@@ -52,7 +101,7 @@ int main(int argc, char* argv[]) {
 
         Wal2Toc wal_toc_entries;
 
-        for (auto& p : std::filesystem::directory_iterator(input_dir_path)) {
+        for (auto& p : fs::directory_iterator(input_dir_path)) {
             if (!p.is_regular_file()) {
                 continue;
             }
@@ -70,7 +119,7 @@ int main(int argc, char* argv[]) {
 
             Wal2TocFileEntry entry;
             entry.path = p;
-            entry.size = std::filesystem::file_size(p);
+            entry.size = fs::file_size(p);
             entry.type = file_type;
             entry.offset = wal_next_sector_offset;
 
@@ -111,7 +160,7 @@ int main(int argc, char* argv[]) {
 
         // Read back TOC data, encrypt it, and write it again (a bit dumb)
         wal_ofs.flush();
-        auto wal_toc_data = filesystem::file_read(output_wal_path);
+        auto wal_toc_data = fs::file_read(output_wal_path);
         assert(wal_toc_data.size() == MAX_TOC_SIZE);
         wal_toc_crypt(wal_toc_data.data());
         wal_ofs.seekp(0, std::ios::beg);
@@ -136,7 +185,7 @@ int main(int argc, char* argv[]) {
 
             stream_pad_until(wal_ofs, entry.offset * SECTOR_SIZE);
 
-            const auto data = filesystem::file_read(entry.path);
+            const auto data = fs::file_read(entry.path);
             stream_write(wal_ofs, data);
         }
 
@@ -146,6 +195,8 @@ int main(int argc, char* argv[]) {
         printf("Error: %s\n", e.what());
         return 1;
     }
+
+#endif
 
     return 0;
 }
